@@ -1,37 +1,56 @@
 <?php
-
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
-    use HasFactory;
-
-    protected $fillable = ['order_number', 'buyer_id', 'seller_id', 'product_id', 'quantity', 'unit_price', 'total_price', 'status', 'buyer_note', 'seller_note', 'cancelled_by', 'cancellation_reason'];
-    protected $casts = [
-        'unit_price' => 'decimal:10,2',
-        'total_price' => 'decimal:10,2',
+    protected $fillable = [
+        'order_number', 'user_id', 'subtotal', 'shipping_cost', 'tax_amount',
+        'total_amount', 'status', 'payment_status', 'payment_method',
+        'shipping_address', 'billing_address', 'customer_notes', 'paid_at', 'delivered_at'
     ];
 
-    public function buyer()
-    {
-        return $this->belongsTo(User::class, 'buyer_id', 'id');
+    protected $casts = [
+        'subtotal' => 'decimal:2',
+        'shipping_cost' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+        'paid_at' => 'datetime',
+        'delivered_at' => 'datetime',
+    ];
+
+    // Relationships
+    public function user() {
+        return $this->belongsTo(User::class);
     }
 
-    public function seller()
-    {
-        return $this->belongsTo(User::class, 'seller_id', 'id');
+    public function items() {
+        return $this->hasMany(OrderItem::class);
     }
 
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
+    // Scopes
+    public function scopePending($query) {
+        return $query->where('status', 'pending');
     }
 
-    public function orderHistories()
-    {
-        return $this->hasMany(OrderHistory::class, 'order_id', 'id');
+    public function scopePaid($query) {
+        return $query->where('payment_status', 'paid');
+    }
+
+    // Methods
+    public function markAsPaid() {
+        $this->update([
+            'payment_status' => 'paid',
+            'paid_at' => now(),
+        ]);
+    }
+
+    public function updateStatus($status) {
+        $this->update(['status' => $status]);
+
+        if ($status === 'delivered') {
+            $this->update(['delivered_at' => now()]);
+        }
     }
 }

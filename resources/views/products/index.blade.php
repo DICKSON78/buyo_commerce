@@ -1,1077 +1,1919 @@
-<!DOCTYPE html>
-<html lang="en" class="light">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buyo - Shop Local</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Poppins', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-        .scrollbar-hide {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-        }
-        .snap-x {
-            scroll-snap-type: x mandatory;
-        }
-        .snap-center {
-            scroll-snap-align: center;
-        }
-        .carousel-container {
-            scroll-behavior: smooth;
-        }
-        .nav-green {
-            background: #008000;
-        }
-        .dark .nav-green {
-            background: #0a5c0a;
-        }
+@extends('layouts.shop')
+@section('contents')
+<style>
+    /* === NAVIGATION SCROLL EFFECT STYLES === */
+    .nav-scrolled {
+        background: rgba(0, 128, 0, 0.85) !important;
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    }
 
-        /* Product Green */
-        .product-green { background: #008000; color: white; }
-        .dark .product-green { background: #0a5c0a; }
-        .product-green-light { background: #e6f4ea; }
-        .dark .product-green-light { background: #1a3a2a; }
-        .product-green-border { border-color: #008000; }
-        .dark .product-green-border { border-color: #0a5c0a; }
-        .product-green-text { color: #008000; }
-        .dark .product-green-text { color: #4CAF50; }
+    .nav-green {
+        background: #008000;
+        transition: all 0.3s ease;
+    }
 
-        /* Categories Colors */
-        .tech-color { background: #008000; color: white; }
-        .dark .tech-color { background: #0a5c0a; }
-        .fashion-color { background: #8B008B; color: white; }
-        .dark .fashion-color { background: #6a006a; }
-        .book-color { background: #FFD700; color: #1a1a1a; }
-        .dark .book-color { background: #d4af37; }
-        .car-color { background: #DC143C; color: white; }
-        .dark .car-color { background: #b01030; }
-        .home-color { background: #FF8C00; color: white; }
-        .dark .home-color { background: #cc7000; }
-        .ticket-color { background: #4B0082; color: white; }
-        .dark .ticket-color { background: #3a0064; }
-        .cake-color { background: #FF69B4; color: white; }
-        .dark .cake-color { background: #d4589a; }
-        .electronics-color { background: #1E90FF; color: white; }
-        .dark .electronics-color { background: #1870cc; }
+    .dark .nav-green {
+        background: #0a5c0a;
+    }
 
-        .tech-light { background: #e6f4ea; }
-        .dark .tech-light { background: #1a3a2a; }
-        .fashion-light { background: #f3e6f5; }
-        .dark .fashion-light { background: #2a1a3a; }
-        .book-light { background: #fff9e6; }
-        .dark .book-light { background: #3a2a1a; }
-        .car-light { background: #ffe6e6; }
-        .dark .car-light { background: #3a1a1a; }
-        .home-light { background: #fff0e6; }
-        .dark .home-light { background: #3a2a1a; }
-        .ticket-light { background: #e6e6fa; }
-        .dark .ticket-light { background: #2a1a3a; }
-        .cake-light { background: #ffe6f2; }
-        .dark .cake-light { background: #3a1a2a; }
-        .electronics-light { background: #e6f2ff; }
-        .dark .electronics-light { background: #1a2a3a; }
+    .nav-scrolled.dark {
+        background: rgba(10, 92, 10, 0.95) !important;
+    }
 
-        .tech-border { border-color: #008000; }
-        .dark .tech-border { border-color: #0a5c0a; }
-        .fashion-border { border-color: #8B008B; }
-        .dark .fashion-border { border-color: #6a006a; }
-        .book-border { border-color: #FFD700; }
-        .dark .book-border { border-color: #d4af37; }
-        .car-border { border-color: #DC143C; }
-        .dark .car-border { border-color: #b01030; }
-        .home-border { border-color: #FF8C00; }
-        .dark .home-border { border-color: #cc7000; }
-        .ticket-border { border-color: #4B0082; }
-        .dark .ticket-border { border-color: #3a0064; }
-        .cake-border { border-color: #FF69B4; }
-        .dark .cake-border { border-color: #d4589a; }
-        .electronics-border { border-color: #1E90FF; }
-        .dark .electronics-border { border-color: #1870cc; }
+    /* Categories scroll styling - IMPROVED SCROLL BEHAVIOR */
+    .categories-scroll {
+        display: flex;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        gap: 12px;
+        padding: 8px 0;
+        scroll-behavior: smooth;
+    }
 
-        .tech-text { color: #008000; }
-        .dark .tech-text { color: #4CAF50; }
-        .fashion-text { color: #8B008B; }
-        .dark .fashion-text { color: #b366b3; }
-        .book-text { color: #FFD700; }
-        .dark .book-text { color: #ffeb3b; }
-        .car-text { color: #DC143C; }
-        .dark .car-text { color: #ff5252; }
-        .home-text { color: #FF8C00; }
-        .dark .home-text { color: #ffa726; }
-        .ticket-text { color: #4B0082; }
-        .dark .ticket-text { color: #7c43bd; }
-        .cake-text { color: #FF69B4; }
-        .dark .cake-text { color: #ff85c0; }
-        .electronics-text { color: #1E90FF; }
-        .dark .electronics-text { color: #64b5f6; }
+    .categories-scroll::-webkit-scrollbar {
+        display: none;
+    }
 
-        /* Sidebar Width */
-        .sidebar-wide {
-            width: 20rem;
-        }
+    /* Multiple selection styling - FIXED POSITION */
+    .filter-tags-container {
+        position: sticky;
+        top: 64px;
+        z-index: 45;
+        background: white;
+        padding: 8px 0;
+        border-bottom: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
 
-        /* Dropdown */
-        .dropdown {
-            position: relative;
-            display: inline-block;
+    .dark .filter-tags-container {
+        background: #111827;
+        border-bottom-color: #374151;
+    }
+
+    .filter-tag {
+        display: inline-flex;
+        align-items: center;
+        background: #dcfce7;
+        color: #166534;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        margin: 2px;
+        border: 1px solid #bbf7d0;
+        font-weight: 500;
+    }
+
+    .dark .filter-tag {
+        background: #052e16;
+        color: #86efac;
+        border-color: #065f46;
+    }
+
+    .filter-tag button {
+        margin-left: 6px;
+        background: none;
+        border: none;
+        color: #166534;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 14px;
+    }
+
+    .dark .filter-tag button {
+        color: #86efac;
+    }
+
+    /* Product slide animation */
+    @keyframes slideInFromRight {
+        from { 
+            opacity: 0; 
+            transform: translateX(30px); 
         }
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: white;
-            min-width: 180px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            border-radius: 12px;
-            z-index: 1000;
-            overflow: hidden;
-            margin-top: 8px;
+        to { 
+            opacity: 1; 
+            transform: translateX(0); 
         }
-        .dark .dropdown-content {
-            background-color: #1f2937;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
-        }
-        .dropdown-content a {
-            color: #333;
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-        .dark .dropdown-content a {
-            color: #e5e7eb;
-        }
-        .dropdown-content a:hover {
-            background-color: #f1f5f9;
-        }
-        .dark .dropdown-content a:hover {
-            background-color: #374151;
-        }
-        .dropdown-content a i {
-            margin-right: 8px;
-            width: 16px;
-        }
-        .dropdown.active .dropdown-content {
-            display: block;
-        }
-    </style>
-</head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
-    <!-- Top Navigation Bar -->
-    <nav class="fixed top-0 w-full nav-green shadow-sm z-50">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6">
-            <div class="flex justify-between items-center h-16">
-                <!-- Logo -->
-                <div class="flex items-center">
-                    <div class="hidden sm:flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">
-                            <i class="fas fa-store text-green-600 dark:text-green-400 text-lg"></i>
-                        </div>
-                        <span class="text-white font-bold text-xl">Buyo</span>
-                    </div>
-                    <div class="sm:hidden w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">
+    }
+
+    .product-slide-in {
+        animation: slideInFromRight 0.6s ease-out;
+    }
+
+    /* Rotating sellers animation */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .seller-fade {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    /* Trending products animation */
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    .trending-fade {
+        animation: slideIn 0.5s ease-in-out;
+    }
+
+    /* Loading animations */
+    @keyframes shimmer {
+        0% { background-position: -468px 0; }
+        100% { background-position: 468px 0; }
+    }
+
+    .shimmer {
+        animation: shimmer 2s infinite linear;
+        background: linear-gradient(to right, #f6f7f8 8%, #edeef1 18%, #f6f7f8 33%);
+        background-size: 800px 104px;
+    }
+
+    /* Product card enhancements */
+    .product-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+
+    .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .dark .product-card {
+        border-color: #374151;
+    }
+
+    .dark .product-card:hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Price tag styling */
+    .price-tag {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Sale badge */
+    .sale-badge {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Category button enhancements */
+    .category-btn {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .category-btn:hover {
+        transform: scale(1.05);
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
+    }
+
+    .category-btn.active {
+        background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
+        border-color: #10b981;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .dark .category-btn:hover {
+        background: linear-gradient(135deg, #052e16, #064e3b) !important;
+    }
+
+    .dark .category-btn.active {
+        background: linear-gradient(135deg, #064e3b, #047857) !important;
+        border-color: #10b981;
+    }
+
+    /* Infinite scroll loader */
+    .infinite-scroll-loader {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .infinite-scroll-loader.show {
+        opacity: 1;
+    }
+
+    /* Price range input styling */
+    .price-input {
+        border: 2px solid #d1d5db;
+        transition: all 0.3s ease;
+    }
+
+    .price-input:focus {
+        border-color: #10b981;
+        ring-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    /* Share bottom sheet - FIXED VISIBILITY */
+    .share-bottom-sheet {
+        position: fixed;
+        bottom: -100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 24px 24px 0 0;
+        box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.1);
+        transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .share-bottom-sheet.active {
+        bottom: 0;
+    }
+
+    .share-bottom-sheet-handle {
+        width: 48px;
+        height: 5px;
+        background: #d1d5db;
+        border-radius: 3px;
+        margin: 16px auto;
+    }
+
+    .dark .share-bottom-sheet {
+        background: #1f2937;
+        box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Sticky categories - IMPROVED SCROLLING BEHAVIOR */
+    .sticky-categories {
+        position: sticky;
+        top: 80px;
+        z-index: 40;
+        background: white;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .dark .sticky-categories {
+        background: #111827;
+    }
+
+    .sticky-categories.scrolled {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    /* FIXED: Bottom sheet modal content visibility */
+    .bottom-sheet-content {
+        background: white;
+        color: #1f2937;
+        padding: 20px;
+    }
+
+    .dark .bottom-sheet-content {
+        background: #1f2937;
+        color: #f9fafb;
+    }
+
+    /* FIXED: Image display issues */
+    .product-image {
+        width: 100%;
+        height: 300px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .carousel-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    /* FIXED: Modal overlay improvements */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    /* FIXED: Desktop modal */
+    .desktop-modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        max-width: 90vw;
+        width: 400px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .desktop-modal.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .dark .desktop-modal {
+        background: #1f2937;
+    }
+
+    /* NEW: Enhanced scroll behavior for mobile categories */
+    .category-scroll-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .category-scroll-fade {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 40px;
+        pointer-events: none;
+        z-index: 10;
+        transition: opacity 0.3s ease;
+    }
+
+    .category-scroll-fade-left {
+        left: 0;
+        background: linear-gradient(90deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%);
+    }
+
+    .category-scroll-fade-right {
+        right: 0;
+        background: linear-gradient(270deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0) 100%);
+    }
+
+    .dark .category-scroll-fade-left {
+        background: linear-gradient(90deg, rgba(17,24,39,0.9) 0%, rgba(17,24,39,0) 100%);
+    }
+
+    .dark .category-scroll-fade-right {
+        background: linear-gradient(270deg, rgba(17,24,39,0.9) 0%, rgba(17,24,39,0) 100%);
+    }
+
+    .category-scroll-fade.hidden {
+        opacity: 0;
+    }
+
+    /* Scroll to top button */
+    .scroll-to-top-btn {
+        position: fixed;
+        bottom: 80px;
+        right: 16px;
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        cursor: pointer;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .scroll-to-top-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+    }
+
+    .scroll-to-top-btn.hidden {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px);
+    }
+
+    /* Loading spinner */
+    .loading-spinner {
+        border: 3px solid #f3f4f6;
+        border-top: 3px solid #10b981;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Enhanced Bottom Navigation */
+    .bottom-nav-active {
+        color: #10b981;
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    .dark .bottom-nav-active {
+        background: linear-gradient(135deg, #052e16, #064e3b);
+    }
+
+    /* Ensure bottom nav doesn't cover content */
+    body {
+        padding-bottom: 5rem;
+    }
+
+    /* Enhanced Bottom Sheet - FIXED VISIBILITY */
+    .bottom-sheet {
+        position: fixed;
+        bottom: -100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border-radius: 24px 24px 0 0;
+        box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.1);
+        transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .bottom-sheet.active {
+        bottom: 0;
+    }
+
+    .bottom-sheet-handle {
+        width: 48px;
+        height: 5px;
+        background: #d1d5db;
+        border-radius: 3px;
+        margin: 16px auto;
+    }
+
+    /* Dark mode support */
+    .dark .bottom-sheet {
+        background: #1f2937;
+        box-shadow: 0 -20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Smooth transitions for all interactive elements */
+    * {
+        transition-property: color, background-color, border-color, transform, box-shadow;
+        transition-duration: 300ms;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* FIXED: Ensure images are properly displayed */
+    img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* FIXED: Carousel image styling */
+    .carousel-container img {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* FIXED: Product image fallback */
+    .product-image-fallback {
+        background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+    }
+
+    .dark .product-image-fallback {
+        background: linear-gradient(135deg, #374151, #4b5563);
+        color: #6b7280;
+    }
+</style>
+
+<!-- Top Navigation Bar -->
+<nav id="mainNav" class="fixed top-0 w-full nav-green shadow-sm z-50 transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6">
+        <div class="flex justify-between items-center h-16">
+            <!-- Logo -->
+            <div class="flex items-center">
+                <a href="{{ route('home') }}" class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-lg">
                         <i class="fas fa-store text-green-600 dark:text-green-400 text-lg"></i>
                     </div>
-                </div>
+                    <span class="text-white font-bold text-xl hidden sm:block">Buyo</span>
+                </a>
+            </div>
 
-                <!-- Search Bar -->
-                <div class="flex-1 max-w-xl mx-2 sm:mx-4">
-                    <form class="relative">
-                        <input type="text" placeholder="Search products..."
-                               class="w-full pl-10 pr-4 py-2 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm sm:text-base bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400">
-                        <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500">
+            <!-- Enhanced Search Bar with Advanced Filters -->
+            <div class="flex-1 max-w-2xl mx-2 sm:mx-4">
+                <form action="{{ route('products.index') }}" method="GET" id="searchForm" class="relative">
+                    <div class="relative">
+                        <input type="text" name="search" placeholder="Search products, categories, sellers..." value="{{ request('search') }}"
+                               class="w-full pl-12 pr-24 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm sm:text-base bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm">
+                        <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500">
                             <i class="fas fa-search"></i>
                         </div>
-                    </form>
-                </div>
-
-                <!-- Navigation Icons -->
-                <div class="flex items-center space-x-3 sm:space-x-4">
-                    <!-- Dark Mode Toggle -->
-                    <button id="themeToggle" class="text-white hover:text-yellow-300 transition-colors" title="Toggle Dark Mode">
-                        <i class="fas fa-moon text-lg"></i>
-                    </button>
-
-                    <!-- Language -->
-                    <button onclick="openLanguageModal()" class="text-white hover:text-yellow-300 transition-colors" title="Language">
-                        <i class="fas fa-globe text-lg"></i>
-                    </button>
-
-                    <!-- User Account Dropdown -->
-                    <div class="dropdown" id="accountDropdown">
-                        <button onclick="toggleDropdown()" class="text-white hover:text-yellow-300 transition-colors relative" title="Account">
-                            <i class="fas fa-user text-lg"></i>
-                            <span class="absolute -top-2 -right-2 bg-yellow-500 text-gray-900 dark:text-gray-100 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">J</span>
+                        <button type="button" onclick="toggleAdvancedFilters()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-400 transition-colors">
+                            <i class="fas fa-sliders-h text-sm"></i>
                         </button>
-                        <div class="dropdown-content">
-                            <a href="#"><i class="fas fa-user-circle"></i> View Profile</a>
-                            <a href="#"><i class="fas fa-cog"></i> Settings</a>
-                            <a href="#" class="text-red-600 dark:text-red-400"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </div>
+                    
+                    <!-- Advanced Filters Dropdown - FIXED: Removed brand filter -->
+                    <div id="advancedFilters" class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 z-40 hidden">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Price Range -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price Range (TZS)</label>
+                                <div class="flex space-x-2">
+                                    <input type="number" name="min_price" placeholder="Min" value="{{ request('min_price') }}"
+                                           class="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm price-input">
+                                    <input type="number" name="max_price" placeholder="Max" value="{{ request('max_price') }}"
+                                           class="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm price-input">
+                                </div>
+                            </div>
+                            
+                            <!-- Seller Filter -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Seller</label>
+                                <input type="text" name="seller" placeholder="Seller name" value="{{ request('seller') }}"
+                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm">
+                            </div>
+                            
+                            <!-- Region Filter (Dynamic from Database) -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Region</label>
+                                <select name="region" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm bg-white dark:bg-gray-700">
+                                    <option value="">All Regions</option>
+                                    @foreach($regions as $region)
+                                        <option value="{{ $region }}" {{ request('region') == $region ? 'selected' : '' }}>{{ $region }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Condition Filter (Dynamic from Database) -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Condition</label>
+                                <select name="condition" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm bg-white dark:bg-gray-700">
+                                    <option value="">All Conditions</option>
+                                    @foreach($conditions as $condition)
+                                        <option value="{{ $condition }}" {{ request('condition') == $condition ? 'selected' : '' }}>{{ ucfirst($condition) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Location Filter -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label>
+                                <input type="text" name="location" placeholder="City or Region" value="{{ request('location') }}"
+                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm">
+                            </div>
+
+                            <!-- Sort Options -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Sort By</label>
+                                <select name="sort" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm bg-white dark:bg-gray-700">
+                                    <option value="newest" {{ request('sort') == 'newest' ? 'selected' : '' }}>Newest First</option>
+                                    <option value="price_low" {{ request('sort') == 'price_low' ? 'selected' : '' }}>Price: Low to High</option>
+                                    <option value="price_high" {{ request('sort') == 'price_high' ? 'selected' : '' }}>Price: High to Low</option>
+                                    <option value="popular" {{ request('sort') == 'popular' ? 'selected' : '' }}>Most Popular</option>
+                                    <option value="featured" {{ request('sort') == 'featured' ? 'selected' : '' }}>Featured</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-2 mt-4">
+                            <button type="button" onclick="clearFilters()" class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
+                                Clear All
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors">
+                                Apply Filters
+                            </button>
                         </div>
                     </div>
+                </form>
+            </div>
 
-                    <!-- Cart -->
-                    <button onclick="openCartModal()" class="text-white hover:text-yellow-300 transition-colors relative" title="Cart">
-                        <i class="fas fa-shopping-cart text-lg"></i>
-                        <span class="absolute -top-2 -right-2 bg-yellow-500 text-gray-900 dark:text-gray-100 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">3</span>
-                    </button>
+            <!-- Desktop Navigation Icons -->
+            <div class="hidden lg:flex items-center space-x-4">
+                <!-- Messages Icon -->
+                @auth
+                <a href="{{ route('messages.index') }}" class="text-white hover:text-yellow-300 transition-colors relative" title="Messages">
+                    <i class="fas fa-envelope text-lg"></i>
+                    <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold message-count">0</span>
+                </a>
+                @endauth
 
-                    <!-- Sell -->
-                    <a href="sell.html" class="bg-yellow-500 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 p-2 sm:px-4 sm:py-2 rounded-lg font-semibold hover:bg-yellow-400 dark:hover:bg-yellow-500 transition-colors flex items-center space-x-1 sm:space-x-2">
-                        <i class="fas fa-plus text-sm sm:text-base"></i>
-                        <span class="hidden sm:block">Sell</span>
+                <!-- Cart -->
+                <button onclick="openCart()" class="text-white hover:text-yellow-300 transition-colors relative" title="Cart">
+                    <i class="fas fa-shopping-cart text-lg"></i>
+                    <span class="absolute -top-2 -right-2 bg-yellow-500 text-gray-900 dark:text-gray-100 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold cart-count">0</span>
+                </button>
+
+                <!-- Sell Button - Dynamic based on user status -->
+                @auth
+                    @php
+                        $user = Auth::user();
+                        $isSeller = $user->user_type === 'seller';
+                        $hasSellerProfile = $user->seller ? true : false;
+                    @endphp
+
+                    @if($isSeller)
+                        <a href="{{ route('seller.products.create') }}" class="bg-yellow-500 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 dark:hover:bg-yellow-500 transition-colors flex items-center space-x-2 shadow-lg">
+                            <i class="fas fa-plus"></i>
+                            <span>Sell Product</span>
+                        </a>
+                    @else
+                        <a href="{{ route('register.seller') }}" class="bg-yellow-500 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 dark:hover:bg-yellow-500 transition-colors flex items-center space-x-2 shadow-lg">
+                            <i class="fas fa-store"></i>
+                            <span>Become Seller</span>
+                        </a>
+                    @endif
+
+                    <!-- Enhanced User Account Dropdown -->
+                    <div class="dropdown relative" id="accountDropdown">
+                        <button onclick="toggleDropdown()" class="text-white hover:text-yellow-300 transition-colors relative flex items-center justify-center w-10 h-10" title="Account">
+                            <div class="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-gray-900 dark:text-gray-100 font-bold text-sm shadow-lg border-2 border-white">
+                                {{ strtoupper(substr(Auth::user()->username, 0, 1)) }}
+                            </div>
+                        </button>
+                        <div class="dropdown-content absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 opacity-0 invisible transition-all duration-300 transform translate-y-2">
+                            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                                <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm">{{ Auth::user()->full_name ?? Auth::user()->username }}</p>
+                                <p class="text-gray-500 dark:text-gray-400 text-xs">{{ Auth::user()->email ?? 'No email' }}</p>
+                            </div>
+                            
+                            <!-- Show current dashboard -->
+                            @if($isSeller)
+                                <a href="{{ route('seller.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900 border-l-4 border-green-600">
+                                    <i class="fas fa-store text-green-600 w-5"></i>
+                                    <span>Seller Dashboard</span>
+                                </a>
+                                <a href="{{ route('customer.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    <i class="fas fa-shopping-cart w-5"></i>
+                                    <span>Customer Dashboard</span>
+                                </a>
+                            @else
+                                <a href="{{ route('customer.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900 border-l-4 border-green-600">
+                                    <i class="fas fa-shopping-cart text-green-600 w-5"></i>
+                                    <span>Customer Dashboard</span>
+                                </a>
+                                @if($hasSellerProfile)
+                                    <a href="{{ route('seller.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <i class="fas fa-store w-5"></i>
+                                        <span>Seller Dashboard</span>
+                                    </a>
+                                @endif
+                            @endif
+
+                            <a href="{{ $isSeller ? route('seller.profile') : route('customer.profile') }}" class="flex items-center space-x-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <i class="fas fa-user-circle w-5"></i>
+                                <span>View Profile</span>
+                            </a>
+                            <a href="#" class="flex items-center space-x-3 px-4 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <i class="fas fa-cog w-5"></i>
+                                <span>Settings</span>
+                            </a>
+                            <div class="border-t border-gray-100 dark:border-gray-700 mt-2 pt-2">
+                                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="flex items-center space-x-3 px-4 py-3 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900">
+                                    <i class="fas fa-sign-out-alt w-5"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    <!-- Not logged in -->
+                    <a href="{{ route('login.customer') }}" class="text-white hover:text-yellow-300 transition-colors font-semibold">
+                        Login
                     </a>
-                </div>
+                    <a href="{{ route('register.customer') }}" class="bg-yellow-500 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 dark:hover:bg-yellow-500 transition-colors shadow-lg">
+                        Register
+                    </a>
+                @endauth
             </div>
-        </div>
-    </nav>
 
-    <!-- Language Modal -->
-    <div id="languageModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100">Select Language</h3>
-                <button onclick="closeLanguageModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="space-y-3">
-                <button class="w-full bg-green-600 dark:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2">
-                    <i class="fas fa-check"></i>
-                    <span>English</span>
-                </button>
-                <button class="w-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-3 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2">
-                    <span>Kiswahili</span>
+            <!-- Mobile Menu Button -->
+            <div class="lg:hidden flex items-center space-x-3">
+                <button onclick="openCart()" class="text-white hover:text-yellow-300 transition-colors relative" title="Cart">
+                    <i class="fas fa-shopping-cart text-lg"></i>
+                    <span class="absolute -top-2 -right-2 bg-yellow-500 text-gray-900 dark:text-gray-100 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold cart-count">0</span>
                 </button>
             </div>
         </div>
     </div>
+</nav>
 
-    <!-- Cart Modal -->
-    <div id="cartModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4 max-h-96 overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100">Your Cart (3 items)</h3>
-                <button onclick="closeCartModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
+<!-- Filter Tags Container - FIXED POSITION -->
+<div id="filterTagsContainer" class="filter-tags-container hidden">
+    <div id="filterTags" class="flex flex-wrap gap-2 max-w-7xl mx-auto px-3 sm:px-6">
+        <!-- Filter tags will be dynamically added here -->
+    </div>
+</div>
 
-            <div class="space-y-4 mb-4">
+<!-- Logout Form -->
+@auth
+<form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+    @csrf
+</form>
+@endauth
+
+@include('partials.bottom_nav')
+
+<!-- Scroll to Top Button -->
+<button id="scrollToTopBtn" class="scroll-to-top-btn hidden" onclick="scrollToTop()" title="Scroll to Top">
+    <i class="fas fa-arrow-up text-white"></i>
+</button>
+
+<script>
+    // === NAVIGATION SCROLL EFFECT ===
+    window.addEventListener('scroll', function() {
+        const nav = document.getElementById('mainNav');
+        const categories = document.getElementById('stickyCategories');
+        const filterTagsContainer = document.getElementById('filterTagsContainer');
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+        
+        if (window.scrollY > 50) {
+            nav.classList.add('nav-scrolled');
+            if (categories) {
+                categories.classList.add('scrolled');
+            }
+            // Show filter tags when scrolled
+            if (filterTagsContainer && selectedCategories.length > 0) {
+                filterTagsContainer.classList.remove('hidden');
+            }
+        } else {
+            nav.classList.remove('nav-scrolled');
+            if (categories) {
+                categories.classList.remove('scrolled');
+            }
+            // Hide filter tags at top
+            if (filterTagsContainer) {
+                filterTagsContainer.classList.add('hidden');
+            }
+        }
+
+        // Show/hide scroll to top button
+        if (scrollToTopBtn) {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.classList.remove('hidden');
+            } else {
+                scrollToTopBtn.classList.add('hidden');
+            }
+        }
+    });
+
+    // === AUTOMATIC DEVICE THEME DETECTION ===
+    const html = document.documentElement;
+
+    function initializeTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const themeToApply = savedTheme || systemTheme;
+        html.classList.toggle('dark', themeToApply === 'dark');
+        localStorage.setItem('theme', themeToApply);
+    }
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        if (!localStorage.getItem('theme')) {
+            html.classList.toggle('dark', e.matches);
+            localStorage.setItem('theme', e.matches ? 'dark' : 'light');
+        }
+    });
+
+    // === ENHANCED DROPDOWN ===
+    function toggleDropdown() {
+        const dropdown = document.getElementById('accountDropdown');
+        const content = dropdown.querySelector('.dropdown-content');
+        content.classList.toggle('opacity-0');
+        content.classList.toggle('invisible');
+        content.classList.toggle('translate-y-2');
+    }
+
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('accountDropdown');
+        if (dropdown && !dropdown.contains(e.target)) {
+            const content = dropdown.querySelector('.dropdown-content');
+            content.classList.add('opacity-0', 'invisible', 'translate-y-2');
+        }
+    });
+
+    // === ADVANCED FILTERS ===
+    function toggleAdvancedFilters() {
+        const filters = document.getElementById('advancedFilters');
+        filters.classList.toggle('hidden');
+    }
+
+    // === ENHANCED CATEGORY SELECTION ===
+    let selectedCategories = getCurrentCategories();
+
+    function getCurrentCategories() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoriesParam = urlParams.get('categories');
+        return categoriesParam ? categoriesParam.split(',') : [];
+    }
+
+    function filterByCategory(categoryId, categoryName) {
+        // Toggle category selection
+        if (selectedCategories.includes(categoryId)) {
+            // Remove category
+            selectedCategories = selectedCategories.filter(id => id !== categoryId);
+        } else {
+            // Add category
+            selectedCategories.push(categoryId);
+        }
+
+        // Update UI
+        updateCategoryUI();
+        
+        // Submit filter
+        submitCategoryFilter();
+    }
+
+    function updateCategoryUI() {
+        // Update active states for category buttons
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            const categoryId = extractCategoryIdFromButton(btn);
+            if (categoryId && selectedCategories.includes(categoryId)) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // Update filter tags display
+        updateFilterTagsDisplay();
+    }
+
+    function extractCategoryIdFromButton(button) {
+        const onclickAttr = button.getAttribute('onclick');
+        if (onclickAttr) {
+            const match = onclickAttr.match(/'([^']+)'/);
+            return match ? match[1] : null;
+        }
+        return null;
+    }
+
+    function updateFilterTagsDisplay() {
+        const filterTagsContainer = document.getElementById('filterTagsContainer');
+        const filterTags = document.getElementById('filterTags');
+        
+        if (!filterTagsContainer || !filterTags) return;
+
+        if (selectedCategories.length === 0) {
+            filterTagsContainer.classList.add('hidden');
+            filterTags.innerHTML = '';
+            return;
+        }
+
+        // Show container and populate tags
+        filterTagsContainer.classList.remove('hidden');
+        
+        let tagsHtml = '';
+        selectedCategories.forEach(categoryId => {
+            const categoryButton = document.querySelector(`[onclick*="${categoryId}"]`);
+            if (categoryButton) {
+                const categoryName = categoryButton.querySelector('span').textContent.trim();
+                tagsHtml += `
+                    <div class="filter-tag">
+                        <i class="fas fa-tag mr-1 text-xs"></i>
+                        ${categoryName}
+                        <button type="button" onclick="removeCategoryFilter('${categoryId}')">×</button>
+                    </div>
+                `;
+            }
+        });
+        
+        filterTags.innerHTML = tagsHtml;
+    }
+
+    function removeCategoryFilter(categoryId) {
+        selectedCategories = selectedCategories.filter(cat => cat !== categoryId);
+        updateCategoryUI();
+        submitCategoryFilter();
+    }
+
+    function submitCategoryFilter() {
+        const form = document.getElementById('searchForm');
+        const categoriesInput = document.createElement('input');
+        categoriesInput.type = 'hidden';
+        categoriesInput.name = 'categories';
+        categoriesInput.value = selectedCategories.join(',');
+        
+        // Remove existing categories input if any
+        const existingInput = form.querySelector('input[name="categories"]');
+        if (existingInput) {
+            existingInput.remove();
+        }
+        
+        if (selectedCategories.length > 0) {
+            form.appendChild(categoriesInput);
+        }
+        
+        form.submit();
+    }
+
+    function clearFilters() {
+        // Clear selected categories
+        selectedCategories = [];
+        updateCategoryUI();
+        
+        // Remove all filter tags
+        const filterTagsContainer = document.getElementById('filterTagsContainer');
+        if (filterTagsContainer) {
+            filterTagsContainer.classList.add('hidden');
+        }
+        
+        // Clear URL parameters and submit form
+        const form = document.getElementById('searchForm');
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.name !== 'search') {
+                input.value = '';
+            }
+        });
+        
+        // Remove categories input if exists
+        const categoriesInput = form.querySelector('input[name="categories"]');
+        if (categoriesInput) {
+            categoriesInput.remove();
+        }
+        
+        form.submit();
+    }
+
+    // === SCROLL TO TOP FUNCTION ===
+    function scrollToTop() {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
+    // === SCROLL TO CATEGORIES ===
+    function scrollToCategories() {
+        const categoriesElement = document.getElementById('stickyCategories');
+        if (categoriesElement) {
+            const offset = 80; // Height of fixed navigation
+            const elementPosition = categoriesElement.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    // === ENHANCED CART MANAGEMENT ===
+    let cartItems = JSON.parse(localStorage.getItem('buyo_cart')) || [];
+
+    function updateCartDisplay() {
+        const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+        const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const total = subtotal + 15000;
+
+        document.querySelectorAll('.cart-count').forEach(el => {
+            el.textContent = totalItems;
+        });
+
+        document.querySelectorAll('.cart-subtotal').forEach(el => {
+            el.textContent = `TZS ${subtotal.toLocaleString()}`;
+        });
+
+        document.querySelectorAll('.cart-total').forEach(el => {
+            el.textContent = `TZS ${total.toLocaleString()}`;
+        });
+
+        updateCartItems();
+    }
+
+    function updateCartItems() {
+        const cartItemsContainer = document.getElementById('cartItems');
+        const mobileCartItemsContainer = document.getElementById('mobileCartItems');
+
+        if (cartItemsContainer) {
+            cartItemsContainer.innerHTML = cartItems.map(item => `
                 <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=100" alt="iPhone" class="w-12 h-12 object-cover rounded-lg">
+                    <div class="w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-box text-gray-500"></i>
+                    </div>
                     <div class="flex-1">
-                        <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">iPhone 13 Pro 256GB</p>
-                        <p class="text-green-600 dark:text-green-400 font-semibold">TZS 2,500,000</p>
+                        <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">${item.name}</p>
+                        <p class="text-green-600 dark:text-green-400 font-semibold">TZS ${item.price.toLocaleString()}</p>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <button class="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                        <button onclick="updateCartItemQuantity(${item.id}, -1)" class="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
                             <i class="fas fa-minus text-xs"></i>
                         </button>
-                        <span class="text-sm font-medium">1</span>
-                        <button class="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium">${item.quantity}</span>
+                        <button onclick="updateCartItemQuantity(${item.id}, 1)" class="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
                             <i class="fas fa-plus text-xs"></i>
                         </button>
                     </div>
                 </div>
+            `).join('') || '<p class="text-gray-500 text-center py-4">Your cart is empty</p>';
+        }
 
+        if (mobileCartItemsContainer) {
+            mobileCartItemsContainer.innerHTML = cartItems.map(item => `
                 <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100" alt="Shoes" class="w-12 h-12 object-cover rounded-lg">
+                    <div class="w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-box text-gray-500"></i>
+                    </div>
                     <div class="flex-1">
-                        <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">Running Shoes</p>
-                        <p class="text-green-600 dark:text-green-400 font-semibold">TZS 120,000</p>
+                        <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">${item.name}</p>
+                        <p class="text-green-600 dark:text-green-400 font-semibold">TZS ${item.price.toLocaleString()}</p>
                     </div>
                     <div class="flex items-center space-x-2">
-                        <button class="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                        <button onclick="updateCartItemQuantity(${item.id}, -1)" class="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
                             <i class="fas fa-minus text-xs"></i>
                         </button>
-                        <span class="text-sm font-medium">1</span>
-                        <button class="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                        <span class="text-sm font-medium">${item.quantity}</span>
+                        <button onclick="updateCartItemQuantity(${item.id}, 1)" class="w-6 h-6 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
                             <i class="fas fa-plus text-xs"></i>
                         </button>
                     </div>
                 </div>
-            </div>
+            `).join('') || '<p class="text-gray-500 text-center py-4">Your cart is empty</p>';
+        }
+    }
 
-            <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-gray-600 dark:text-gray-400">Subtotal:</span>
-                    <span class="font-semibold">TZS 2,620,000</span>
+    function addToCart(productId, productName, productPrice) {
+        // Check if user is logged in
+        fetch('{{ route("api.user.status") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.is_logged_in) {
+                    // Store intended URL and redirect to registration
+                    fetch('{{ route("store.intended.url") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            intended_url: window.location.href
+                        })
+                    })
+                    .then(() => {
+                        showNotification('Tafadhali jisajili kwanza ili uweze kununua bidhaa', 'error');
+                        window.location.href = '{{ route("register.customer") }}';
+                    });
+                    return;
+                }
+
+                // User is logged in, proceed with adding to cart
+                const existingItem = cartItems.find(item => item.id === productId);
+
+                if (existingItem) {
+                    existingItem.quantity += 1;
+                } else {
+                    cartItems.push({
+                        id: productId,
+                        name: productName,
+                        price: productPrice,
+                        quantity: 1
+                    });
+                }
+
+                localStorage.setItem('buyo_cart', JSON.stringify(cartItems));
+                updateCartDisplay();
+
+                showNotification(`${productName} imeongezwa kwenye cart!`, 'success');
+
+                // Auto-open cart on mobile
+                if (window.innerWidth < 1024) {
+                    openCart();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking user status:', error);
+                showNotification('Hitilafu imetokea. Tafadhali jaribu tena.', 'error');
+            });
+    }
+
+    function updateCartItemQuantity(productId, change) {
+        const item = cartItems.find(item => item.id === productId);
+        if (item) {
+            item.quantity += change;
+            if (item.quantity <= 0) {
+                cartItems = cartItems.filter(item => item.id !== productId);
+            }
+            localStorage.setItem('buyo_cart', JSON.stringify(cartItems));
+            updateCartDisplay();
+        }
+    }
+
+    // === ENHANCED CART MODAL/BOTTOM SHEET ===
+    function openCart() {
+        if (window.innerWidth >= 1024) {
+            // Desktop - use modal
+            document.getElementById('desktopCartModal').classList.add('active');
+            document.getElementById('desktopCartOverlay').classList.add('active');
+        } else {
+            // Mobile - use bottom sheet
+            document.getElementById('mobileCartSheet').classList.add('active');
+            document.getElementById('mobileCartOverlay').classList.add('active');
+        }
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCart() {
+        document.getElementById('desktopCartModal').classList.remove('active');
+        document.getElementById('mobileCartSheet').classList.remove('active');
+        document.getElementById('desktopCartOverlay').classList.remove('active');
+        document.getElementById('mobileCartOverlay').classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    // === SHARE BOTTOM SHEET ===
+    function openShareSheet(productId, productName, productImage) {
+        document.getElementById('shareProductId').value = productId;
+        document.getElementById('shareProductName').textContent = productName;
+        document.getElementById('shareProductImage').src = productImage;
+        
+        document.getElementById('shareBottomSheet').classList.add('active');
+        document.getElementById('shareOverlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeShareSheet() {
+        document.getElementById('shareBottomSheet').classList.remove('active');
+        document.getElementById('shareOverlay').classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    function shareToPlatform(platform) {
+        const productName = document.getElementById('shareProductName').textContent;
+        const productUrl = window.location.href;
+        let shareUrl = '';
+
+        switch(platform) {
+            case 'whatsapp':
+                shareUrl = `https://wa.me/?text=Check out this product: ${productName} - ${productUrl}`;
+                break;
+            case 'facebook':
+                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
+                break;
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(productName)}&url=${encodeURIComponent(productUrl)}`;
+                break;
+            case 'telegram':
+                shareUrl = `https://t.me/share/url?url=${encodeURIComponent(productUrl)}&text=${encodeURIComponent(productName)}`;
+                break;
+            case 'copy':
+                navigator.clipboard.writeText(productUrl).then(() => {
+                    showNotification('Link copied to clipboard!', 'success');
+                });
+                closeShareSheet();
+                return;
+        }
+
+        window.open(shareUrl, '_blank', 'width=600,height=400');
+        closeShareSheet();
+    }
+
+    // === ENHANCED PRODUCT INTERACTIONS ===
+    function initializeProductInteractions() {
+        // Enhanced carousel functionality
+        document.querySelectorAll('.carousel-container').forEach(carousel => {
+            const images = carousel.querySelectorAll('img');
+            const indicators = carousel.parentElement.querySelectorAll('.indicator');
+            if (images.length <= 1) return;
+
+            let currentIndex = 0;
+            let autoScrollInterval;
+
+            const updateIndicators = () => {
+                indicators.forEach((ind, i) => {
+                    ind.classList.toggle('opacity-100', i === currentIndex);
+                    ind.classList.toggle('opacity-50', i !== currentIndex);
+                });
+            };
+
+            const scrollToImage = (index) => {
+                currentIndex = index;
+                images[index].scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                updateIndicators();
+            };
+
+            // Auto-scroll every 5 seconds
+            const startAutoScroll = () => {
+                autoScrollInterval = setInterval(() => {
+                    const nextIndex = (currentIndex + 1) % images.length;
+                    scrollToImage(nextIndex);
+                }, 5000);
+            };
+
+            const stopAutoScroll = () => {
+                clearInterval(autoScrollInterval);
+            };
+
+            // Touch and mouse events
+            let startX = 0;
+            const handleEnd = (endX) => {
+                const diff = startX - endX;
+                if (Math.abs(diff) > 50) {
+                    if (diff > 0 && currentIndex < images.length - 1) {
+                        scrollToImage(currentIndex + 1);
+                    } else if (diff < 0 && currentIndex > 0) {
+                        scrollToImage(currentIndex - 1);
+                    }
+                }
+            };
+
+            carousel.addEventListener('mousedown', e => { startX = e.clientX; stopAutoScroll(); });
+            carousel.addEventListener('touchstart', e => { startX = e.touches[0].clientX; stopAutoScroll(); });
+            carousel.addEventListener('mouseup', e => { handleEnd(e.clientX); startAutoScroll(); });
+            carousel.addEventListener('touchend', e => { handleEnd(e.changedTouches[0].clientX); startAutoScroll(); });
+
+            indicators.forEach((ind, i) => {
+                ind.addEventListener('click', () => {
+                    stopAutoScroll();
+                    scrollToImage(i);
+                    startAutoScroll();
+                });
+            });
+
+            // Start auto-scroll
+            startAutoScroll();
+
+            // Pause auto-scroll on hover
+            carousel.addEventListener('mouseenter', stopAutoScroll);
+            carousel.addEventListener('mouseleave', startAutoScroll);
+
+            updateIndicators();
+        });
+
+        // Enhanced like button functionality
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const isLiked = this.classList.contains('fas');
+                this.classList.toggle('far');
+                this.classList.toggle('fas');
+                this.classList.toggle('text-red-500');
+                
+                if (!isLiked) {
+                    this.classList.add('animate-pulse');
+                    setTimeout(() => this.classList.remove('animate-pulse'), 600);
+                }
+
+                const productId = this.dataset.productId;
+                // AJAX call to save like
+            });
+        });
+
+        // Share button functionality
+        document.querySelectorAll('.share-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const productId = this.dataset.productId;
+                const productName = this.dataset.productName;
+                const productImage = this.dataset.productImage || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=500';
+                
+                openShareSheet(productId, productName, productImage);
+            });
+        });
+    }
+
+    // Initialize everything when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeTheme();
+        updateCartDisplay();
+        initializeProductInteractions();
+        
+        // Initialize categories
+        updateCategoryUI();
+        
+        // Show filter tags if categories are selected and page is scrolled
+        if (selectedCategories.length > 0 && window.scrollY > 50) {
+            const filterTagsContainer = document.getElementById('filterTagsContainer');
+            if (filterTagsContainer) {
+                filterTagsContainer.classList.remove('hidden');
+            }
+        }
+
+        // Initialize rotating content only if elements exist
+        if (document.getElementById('rotatingSellers')) {
+            rotateSellers();
+            setInterval(rotateSellers, 20000);
+        }
+        
+        if (document.getElementById('trendingProducts')) {
+            startTrendingRotation();
+        }
+
+        // Close modals when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'desktopCartOverlay' || e.target.id === 'mobileCartOverlay' || e.target.id === 'shareOverlay') {
+                closeCart();
+                closeShareSheet();
+            }
+            const contactModal = document.getElementById('contactSellerModal');
+            if (contactModal && contactModal.classList.contains('active') && e.target === contactModal) {
+                closeContactModal();
+            }
+            const advancedFilters = document.getElementById('advancedFilters');
+            if (advancedFilters && !advancedFilters.contains(e.target) && !e.target.closest('form')) {
+                advancedFilters.classList.add('hidden');
+            }
+            
+            const dropdown = document.getElementById('accountDropdown');
+            if (dropdown && !dropdown.contains(e.target)) {
+                const content = dropdown.querySelector('.dropdown-content');
+                content.classList.add('opacity-0', 'invisible', 'translate-y-2');
+            }
+        });
+
+        // FIXED: Ensure images load properly
+        document.querySelectorAll('img').forEach(img => {
+            img.addEventListener('error', function() {
+                this.src = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=500';
+                this.alt = 'Image not available';
+            });
+        });
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 1024) {
+            closeCart();
+            closeShareSheet();
+        }
+    });
+
+    // Utility functions
+    function showNotification(message, type = 'info') {
+        // Create a simple notification system
+        const notification = document.createElement('div');
+        notification.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
+            type === 'success' ? 'bg-green-500 text-white' : 
+            type === 'error' ? 'bg-red-500 text-white' : 
+            'bg-blue-500 text-white'
+        }`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+
+    function proceedToCheckout() {
+        // Implementation for checkout
+        console.log('Proceeding to checkout');
+        showNotification('Proceeding to checkout...', 'success');
+    }
+
+    function openContactModal(productId, sellerName, sellerId) {
+        // Implementation for contact modal
+        console.log('Opening contact modal', productId, sellerName, sellerId);
+        showNotification('Opening contact form for ' + sellerName, 'info');
+    }
+
+    function closeContactModal() {
+        // Implementation for closing contact modal
+        console.log('Closing contact modal');
+    }
+
+    function sendMessageToSeller(event) {
+        event.preventDefault();
+        // Implementation for sending message
+        console.log('Sending message to seller');
+        showNotification('Message sent successfully!', 'success');
+    }
+
+    function showLoginAlert() {
+        showNotification('Tafadhali ingia kwenye akaunti yako kwanza', 'error');
+    }
+
+    // === ENHANCED ROTATING SELLERS ===
+    let currentSellerIndex = 0;
+    let sellers = @json($recentSellers->take(5));
+
+    function rotateSellers() {
+        if (sellers.length <= 1) return;
+        
+        const sellerContainer = document.getElementById('rotatingSellers');
+        if (!sellerContainer) return;
+        
+        currentSellerIndex = (currentSellerIndex + 1) % sellers.length;
+        const seller = sellers[currentSellerIndex];
+        
+        sellerContainer.innerHTML = `
+            <div class="seller-fade flex items-center space-x-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-800 rounded-xl border border-green-200 dark:border-gray-600 cursor-pointer group hover:shadow-lg transition-all duration-300">
+                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                    ${seller.store_name ? seller.store_name.substring(0, 2).toUpperCase() : 'SL'}
                 </div>
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-gray-600 dark:text-gray-400">Shipping:</span>
-                    <span class="font-semibold">TZS 15,000</span>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm truncate group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">${seller.store_name || 'Seller'}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 ${seller.business_place || 'Online'}</p>
                 </div>
-                <div class="flex justify-between items-center text-lg font-bold">
-                    <span>Total:</span>
-                    <span class="text-green-600 dark:text-green-400">TZS 2,635,000</span>
+                <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-semibold shadow-sm">${seller.products_count || 0} items</span>
+            </div>
+        `;
+    }
+
+    // === ROTATING TRENDING PRODUCTS ===
+    let currentTrendingIndex = 0;
+    let trendingProducts = @json(($trendingProducts ?? collect())->take(5));
+    let trendingInterval;
+
+    function startTrendingRotation() {
+        if (trendingProducts.length <= 1) return;
+        
+        trendingInterval = setInterval(() => {
+            rotateTrendingProducts();
+        }, 4000);
+    }
+
+    function rotateTrendingProducts() {
+        if (trendingProducts.length <= 1) return;
+        
+        const trendingContainer = document.getElementById('trendingProducts');
+        if (!trendingContainer) return;
+        
+        currentTrendingIndex = (currentTrendingIndex + 1) % trendingProducts.length;
+        const trending = trendingProducts[currentTrendingIndex];
+        
+        trendingContainer.innerHTML = `
+            <div class="trending-fade flex items-center space-x-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-xl hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-200 dark:border-gray-600">
+                <img src="${trending.product_images && trending.product_images.length > 0 ? '{{ asset("storage/") }}/' + trending.product_images[0].image_path : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100'}" 
+                     alt="${trending.name}" 
+                     class="w-16 h-16 object-cover rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-300">
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-tight group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">${trending.name.length > 30 ? trending.name.substring(0, 30) + '...' : trending.name}</p>
+                    <p class="text-green-600 dark:text-green-400 font-bold text-base mt-1">TZS ${trending.price.toLocaleString()}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center space-x-1">
+                        <i class="fas fa-eye"></i>
+                        <span>${trending.view_count || 0} views</span>
+                    </p>
                 </div>
             </div>
+        `;
+    }
+</script>
 
-            <button onclick="proceedToCheckout()" class="w-full bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-800 text-white py-3 rounded-lg font-semibold transition-colors duration-300 flex items-center justify-center space-x-2">
-                <i class="fas fa-lock"></i>
-                <span>Proceed to Checkout</span>
+<!-- Enhanced Desktop Cart Modal -->
+<div class="modal-overlay" id="desktopCartOverlay" onclick="closeCart()"></div>
+<div class="desktop-modal hidden lg:block" id="desktopCartModal">
+    <div class="bottom-sheet-content p-6 max-h-96 overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-2xl text-gray-800 dark:text-gray-100">Your Cart</h3>
+            <button onclick="closeCart()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                <i class="fas fa-times text-xl"></i>
             </button>
         </div>
+
+        <div id="cartItems" class="space-y-4 mb-6">
+            <!-- Cart items will be dynamically added here -->
+        </div>
+
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mb-6">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-gray-600 dark:text-gray-400 text-lg">Subtotal:</span>
+                <span class="font-semibold text-lg cart-subtotal">TZS 0</span>
+            </div>
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-gray-600 dark:text-gray-400 text-lg">Shipping:</span>
+                <span class="font-semibold text-lg">TZS 15,000</span>
+            </div>
+            <div class="flex justify-between items-center text-xl font-bold pt-3 border-t border-gray-200 dark:border-gray-700">
+                <span>Total:</span>
+                <span class="text-green-600 dark:text-green-400 cart-total">TZS 15,000</span>
+            </div>
+        </div>
+
+        <button onclick="proceedToCheckout()" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl">
+            <i class="fas fa-lock"></i>
+            <span class="text-lg">Proceed to Checkout</span>
+        </button>
+    </div>
+</div>
+
+<!-- Mobile Cart Bottom Sheet -->
+<div class="modal-overlay" id="mobileCartOverlay" onclick="closeCart()"></div>
+<div class="bottom-sheet" id="mobileCartSheet">
+    <div class="bottom-sheet-handle"></div>
+    <div class="bottom-sheet-content p-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100">Your Cart (<span class="cart-count">0</span> items)</h3>
+            <button onclick="closeCart()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div id="mobileCartItems" class="space-y-4 mb-4 max-h-60 overflow-y-auto">
+            <!-- Mobile cart items will be dynamically added here -->
+        </div>
+
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-gray-600 dark:text-gray-400">Subtotal:</span>
+                <span class="font-semibold cart-subtotal">TZS 0</span>
+            </div>
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-gray-600 dark:text-gray-400">Shipping:</span>
+                <span class="font-semibold">TZS 15,000</span>
+            </div>
+            <div class="flex justify-between items-center text-lg font-bold">
+                <span>Total:</span>
+                <span class="text-green-600 dark:text-green-400 cart-total">TZS 15,000</span>
+            </div>
+        </div>
+
+        <button onclick="proceedToCheckout()" class="w-full bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-800 text-white py-3 rounded-lg font-semibold transition-colors duration-300 flex items-center justify-center space-x-2">
+            <i class="fas fa-lock"></i>
+            <span>Proceed to Checkout</span>
+        </button>
+    </div>
+</div>
+
+<!-- Share Bottom Sheet -->
+<div class="modal-overlay" id="shareOverlay" onclick="closeShareSheet()"></div>
+<div class="share-bottom-sheet" id="shareBottomSheet">
+    <div class="share-bottom-sheet-handle"></div>
+    <div class="bottom-sheet-content p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-xl text-gray-800 dark:text-gray-100">Share Product</h3>
+            <button onclick="closeShareSheet()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+
+        <div class="flex items-center space-x-4 mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+            <img id="shareProductImage" src="" alt="Product" class="w-16 h-16 object-cover rounded-lg">
+            <div class="flex-1">
+                <p id="shareProductName" class="font-semibold text-gray-800 dark:text-gray-100 text-sm"></p>
+                <p class="text-green-600 dark:text-green-400 font-semibold text-xs mt-1">Share this amazing product!</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <button onclick="shareToPlatform('whatsapp')" class="flex flex-col items-center space-y-2 p-4 bg-green-50 dark:bg-green-900 rounded-xl hover:bg-green-100 dark:hover:bg-green-800 transition-colors">
+                <i class="fab fa-whatsapp text-green-600 dark:text-green-400 text-2xl"></i>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">WhatsApp</span>
+            </button>
+            <button onclick="shareToPlatform('facebook')" class="flex flex-col items-center space-y-2 p-4 bg-blue-50 dark:bg-blue-900 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors">
+                <i class="fab fa-facebook text-blue-600 dark:text-blue-400 text-2xl"></i>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Facebook</span>
+            </button>
+            <button onclick="shareToPlatform('twitter')" class="flex flex-col items-center space-y-2 p-4 bg-blue-50 dark:bg-blue-900 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors">
+                <i class="fab fa-twitter text-blue-400 dark:text-blue-300 text-2xl"></i>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Twitter</span>
+            </button>
+            <button onclick="shareToPlatform('telegram')" class="flex flex-col items-center space-y-2 p-4 bg-blue-50 dark:bg-blue-900 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors">
+                <i class="fab fa-telegram text-blue-500 dark:text-blue-400 text-2xl"></i>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Telegram</span>
+            </button>
+            <button onclick="shareToPlatform('copy')" class="flex flex-col items-center space-y-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                <i class="fas fa-link text-gray-600 dark:text-gray-400 text-2xl"></i>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Copy Link</span>
+            </button>
+            <button onclick="closeShareSheet()" class="flex flex-col items-center space-y-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                <i class="fas fa-times text-gray-600 dark:text-gray-400 text-2xl"></i>
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Cancel</span>
+            </button>
+        </div>
+        <input type="hidden" id="shareProductId">
+    </div>
+</div>
+
+<!-- Enhanced Contact Seller Modal -->
+<div id="contactSellerModal" class="contact-modal fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 opacity-0 invisible transition-all duration-300">
+    <div class="contact-modal-content bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 relative transform scale-95 transition-transform duration-300">
+        <button onclick="closeContactModal()" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+        <div class="text-center mb-6">
+            <div class="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i class="fas fa-store text-green-600 dark:text-green-400 text-3xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Message Seller</h2>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">Send a message to <span id="sellerName" class="font-semibold text-green-600 dark:text-green-400"></span></p>
+        </div>
+        <form id="contactSellerForm" onsubmit="sendMessageToSeller(event)" class="space-y-4">
+            @csrf
+            <input type="hidden" id="productId" name="product_id">
+            <input type="hidden" id="sellerId" name="seller_id">
+            <div>
+                <label for="message" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Your Message</label>
+                <textarea id="message" name="message" rows="4"
+                          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 resize-none transition-all duration-300"
+                          placeholder="Hello, I'm interested in this product. Could you tell me more about it? Please include any specific questions you have about size, color, availability, etc."
+                          required></textarea>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Press Ctrl+Enter to send quickly</p>
+            </div>
+            <button type="submit" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105">
+                <i class="fas fa-paper-plane"></i>
+                <span class="text-lg">Send Message</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="max-w-8xl mx-auto px-3 sm:px-6 pt-24 pb-24">
+    <!-- Enhanced Mobile Categories Bar with IMPROVED SCROLL BEHAVIOR -->
+    <div id="stickyCategories" class="lg:hidden sticky-categories bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 mb-6 z-30" style="top: 80px;">
+        <div class="category-scroll-container relative">
+            <div class="category-scroll-fade category-scroll-fade-left hidden"></div>
+            <div class="categories-scroll">
+                @foreach($categories as $category)
+                <button onclick="filterByCategory('{{ $category->id }}', '{{ $category->name }}')" 
+                        class="category-btn flex flex-col items-center cursor-pointer group flex-shrink-0 p-3 rounded-xl bg-white dark:bg-gray-800 hover:shadow-md transition-all duration-300 {{ in_array($category->id, explode(',', request('categories', ''))) ? 'active' : '' }}">
+                    <div class="relative">
+                        <div class="w-14 h-14 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg flex items-center justify-center">
+                            <i class="fas fa-{{ $category->icon ?? 'tag' }} text-white text-lg"></i>
+                        </div>
+                        <div class="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold border-2 border-white dark:border-gray-800 shadow-lg">
+                            {{ $category->products_count ?? 0 }}
+                        </div>
+                    </div>
+                    <span class="text-xs font-semibold text-gray-700 dark:text-gray-300 mt-2 truncate max-w-16 text-center">
+                        {{ $category->name }}
+                    </span>
+                </button>
+                @endforeach
+            </div>
+            <div class="category-scroll-fade category-scroll-fade-right"></div>
+        </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-2 sm:px-4 pt-20">
-        <!-- Mobile Categories Bar -->
-        <div class="lg:hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-3 mb-4">
-            <div class="flex space-x-4 overflow-x-auto pb-1 scrollbar-hide">
-                <div class="flex flex-col items-center cursor-pointer group flex-shrink-0">
-                    <div class="relative">
-                        <div class="w-14 h-14 rounded-full p-0.5 tech-color">
-                            <div class="w-full h-full bg-white dark:bg-gray-800 rounded-full flex items-center justify-center p-1">
-                                <div class="w-full h-full tech-light rounded-full flex items-center justify-center">
-                                    <i class="fas fa-mobile-alt tech-text text-sm"></i>
-                                </div>
+    <div class="flex gap-8 xl:gap-12">
+        <!-- Enhanced Left Sidebar -->
+        <div class="sidebar-wide hidden xl:block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 h-fit sticky top-32 shadow-lg">
+            <div class="mb-8">
+                <h3 class="font-bold text-xl text-gray-800 dark:text-gray-100 mb-4 flex items-center space-x-2">
+                    <i class="fas fa-layer-group text-green-600"></i>
+                    <span>Categories</span>
+                </h3>
+                <div class="space-y-2 max-h-96 overflow-y-auto pr-2">
+                    @foreach($categories as $category)
+                    <button onclick="filterByCategory('{{ $category->id }}', '{{ $category->name }}')" 
+                            class="category-btn w-full flex items-center justify-between p-3 rounded-xl bg-white dark:bg-gray-800 hover:shadow-md transition-all duration-300 group {{ in_array($category->id, explode(',', request('categories', ''))) ? 'active' : '' }}">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900 dark:to-emerald-900 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                <i class="fas fa-{{ $category->icon ?? 'tag' }} text-green-600 dark:text-green-400 text-sm"></i>
                             </div>
+                            <span class="text-gray-700 dark:text-gray-300 font-medium text-sm group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">{{ $category->name }}</span>
                         </div>
-                        <div class="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold border-2 border-white dark:border-gray-800 shadow-sm">
-                            5
-                        </div>
-                    </div>
-                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1 truncate max-w-14 text-center">
-                        Tech Store
-                    </span>
+                        <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs px-2 py-1 rounded-full font-semibold shadow-sm">{{ $category->products_count ?? 0 }}</span>
+                    </button>
+                    @endforeach
                 </div>
-                <div class="flex flex-col items-center cursor-pointer group flex-shrink-0">
-                    <div class="relative">
-                        <div class="w-14 h-14 rounded-full p-0.5 fashion-color">
-                            <div class="w-full h-full bg-white dark:bg-gray-800 rounded-full flex items-center justify-center p-1">
-                                <div class="w-full h-full fashion-light rounded-full flex items-center justify-center">
-                                    <i class="fas fa-tshirt fashion-text text-sm"></i>
-                                </div>
+            </div>
+
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <h3 class="font-bold text-xl text-gray-800 dark:text-gray-100 mb-4 flex items-center space-x-2">
+                    <i class="fas fa-store text-green-600"></i>
+                    <span>Active Sellers</span>
+                </h3>
+                <div id="rotatingSellers" class="space-y-3">
+                    @if($recentSellers->count() > 0)
+                        @foreach($recentSellers->take(3) as $seller)
+                        <div class="flex items-center space-x-3 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-700 dark:to-gray-800 rounded-xl border border-green-200 dark:border-gray-600 cursor-pointer group hover:shadow-lg transition-all duration-300">
+                            <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                                {{ substr($seller->store_name ?? 'SL', 0, 2) }}
                             </div>
-                        </div>
-                        <div class="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold border-2 border-white dark:border-gray-800 shadow-sm">
-                            8
-                        </div>
-                    </div>
-                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1 truncate max-w-14 text-center">
-                        Fashion Hub
-                    </span>
-                </div>
-                <div class="flex flex-col items-center cursor-pointer group flex-shrink-0">
-                    <div class="relative">
-                        <div class="w-14 h-14 rounded-full p-0.5 book-color">
-                            <div class="w-full h-full bg-white dark:bg-gray-800 rounded-full flex items-center justify-center p-1">
-                                <div class="w-full h-full book-light rounded-full flex items-center justify-center">
-                                    <i class="fas fa-book book-text text-sm"></i>
-                                </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm truncate group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">{{ $seller->store_name ?? 'Seller' }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 {{ $seller->business_place ?? 'Online' }}</p>
                             </div>
+                            <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full font-semibold shadow-sm">{{ $seller->products_count ?? 0 }} items</span>
                         </div>
-                        <div class="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold border-2 border-white dark:border-gray-800 shadow-sm">
-                            12
-                        </div>
-                    </div>
-                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1 truncate max-w-14 text-center">
-                        Book Store
-                    </span>
-                </div>
-                <div class="flex flex-col items-center cursor-pointer group flex-shrink-0">
-                    <div class="relative">
-                        <div class="w-14 h-14 rounded-full p-0.5 car-color">
-                            <div class="w-full h-full bg-white dark:bg-gray-800 rounded-full flex items-center justify-center p-1">
-                                <div class="w-full h-full car-light rounded-full flex items-center justify-center">
-                                    <i class="fas fa-car car-text text-sm"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold border-2 border-white dark:border-gray-800 shadow-sm">
-                            2
-                        </div>
-                    </div>
-                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1 truncate max-w-14 text-center">
-                        Auto Deals
-                    </span>
-                </div>
-                <div class="flex flex-col items-center cursor-pointer group flex-shrink-0">
-                    <div class="relative">
-                        <div class="w-14 h-14 rounded-full p-0.5 cake-color">
-                            <div class="w-full h-full bg-white dark:bg-gray-800 rounded-full flex items-center justify-center p-1">
-                                <div class="w-full h-full cake-light rounded-full flex items-center justify-center">
-                                    <i class="fas fa-birthday-cake cake-text text-sm"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold border-2 border-white dark:border-gray-800 shadow-sm">
-                            7
-                        </div>
-                    </div>
-                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1 truncate max-w-14 text-center">
-                        Cake Shop
-                    </span>
+                        @endforeach
+                    @else
+                        <p class="text-gray-500 text-center py-4">No active sellers found</p>
+                    @endif
                 </div>
             </div>
         </div>
 
-        <div class="flex gap-6 lg:gap-8">
-            <!-- Left Sidebar -->
-            <div class="sidebar-wide hidden lg:block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 h-fit sticky top-28">
-                <div class="mb-6">
-                    <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mb-3">Categories</h3>
-                    <div class="space-y-1">
-                        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-mobile-alt tech-text text-sm w-4"></i>
-                                <span class="text-gray-700 dark:text-gray-300 text-sm">Phones & Tablets</span>
+        <!-- Enhanced Main Product Feed -->
+        <div class="flex-1 min-w-0">
+            <div id="productFeed" class="space-y-6 pb-8">
+                @forelse($products as $product)
+                <div class="product-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <!-- Seller Header -->
+                    <div class="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                                {{ substr($product->seller->store_name ?? 'SL', 0, 2) }}
                             </div>
-                            <span class="tech-light tech-text text-xs px-1.5 py-0.5 rounded-full">156</span>
+                            <div>
+                                <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm">{{ $product->seller->store_name ?? 'Seller' }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center space-x-1">
+                                    <i class="fas fa-map-marker-alt text-green-600"></i>
+                                    <span>{{ $product->seller->business_place ?? 'Online' }}</span>
+                                </p>
+                            </div>
                         </div>
-                        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-laptop electronics-text text-sm w-4"></i>
-                                <span class="text-gray-700 dark:text-gray-300 text-sm">Electronics</span>
-                            </div>
-                            <span class="electronics-light electronics-text text-xs px-1.5 py-0.5 rounded-full">89</span>
+                        <div class="flex items-center space-x-3">
+                            @auth
+                            <button onclick="openContactModal({{ $product->id }}, '{{ $product->seller->store_name ?? 'Seller' }}', {{ $product->seller->user_id ?? 0 }})" class="text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-300" title="Message Seller">
+                                <i class="fas fa-envelope text-lg"></i>
+                            </button>
+                            @else
+                            <button onclick="showLoginAlert()" class="text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-300" title="Message Seller">
+                                <i class="fas fa-envelope text-lg"></i>
+                            </button>
+                            @endauth
+                            <button class="share-btn text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-300" 
+                                    title="Share"
+                                    data-product-id="{{ $product->id }}"
+                                    data-product-name="{{ $product->name }}"
+                                    data-product-image="{{ $product->productImages->first() ? asset('storage/' . $product->productImages->first()->image_path) : 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=500' }}">
+                                <i class="fas fa-share-alt text-lg"></i>
+                            </button>
                         </div>
-                        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-tshirt fashion-text text-sm w-4"></i>
-                                <span class="text-gray-700 dark:text-gray-300 text-sm">Fashion</span>
-                            </div>
-                            <span class="fashion-light fashion-text text-xs px-1.5 py-0.5 rounded-full">234</span>
+                    </div>
+
+                    <!-- Product Images Carousel - FIXED IMAGE DISPLAY -->
+                    <div class="relative">
+                        @if($product->productImages && $product->productImages->count() > 0)
+                        <div class="carousel-container flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" style="height: 450px;">
+                            @foreach($product->productImages as $image)
+                            <img src="{{ asset('storage/' . $image->image_path) }}" alt="{{ $product->name }}" 
+                                 class="carousel-image w-full h-full object-cover snap-center flex-shrink-0 transition-transform duration-500">
+                            @endforeach
                         </div>
-                        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-home home-text text-sm w-4"></i>
-                                <span class="text-gray-700 dark:text-gray-300 text-sm">Home & Garden</span>
-                            </div>
-                            <span class="home-light home-text text-xs px-1.5 py-0.5 rounded-full">167</span>
+                        <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                            @foreach($product->productImages as $index => $image)
+                            <div class="w-3 h-3 bg-white rounded-full opacity-{{ $index === 0 ? '100' : '50' }} indicator cursor-pointer transition-all duration-300 hover:opacity-100 hover:scale-125"></div>
+                            @endforeach
                         </div>
-                        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-car car-text text-sm w-4"></i>
-                                <span class="text-gray-700 dark:text-gray-300 text-sm">Vehicles</span>
-                            </div>
-                            <span class="car-light car-text text-xs px-1.5 py-0.5 rounded-full">45</span>
+                        @else
+                        <div class="w-full h-80 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                            <i class="fas fa-image text-gray-400 text-6xl"></i>
                         </div>
-                        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-ticket-alt ticket-text text-sm w-4"></i>
-                                <span class="text-gray-700 dark:text-gray-300 text-sm">Event Tickets</span>
-                            </div>
-                            <span class="ticket-light ticket-text text-xs px-1.5 py-0.5 rounded-full">23</span>
+                        @endif
+
+                        @if($product->compare_price && $product->compare_price > $product->price)
+                        <div class="sale-badge absolute top-4 right-4">
+                            <i class="fas fa-tag mr-1"></i>
+                            {{ round((($product->compare_price - $product->price) / $product->compare_price) * 100) }}% OFF
                         </div>
-                        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-book book-text text-sm w-4"></i>
-                                <span class="text-gray-700 dark:text-gray-300 text-sm">Books & PDFs</span>
-                            </div>
-                            <span class="book-light book-text text-xs px-1.5 py-0.5 rounded-full">67</span>
+                        @endif
+                    </div>
+
+                    <!-- Engagement Actions -->
+                    <div class="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+                        <div class="flex items-center space-x-4">
+                            <button class="text-2xl text-gray-400 hover:text-red-500 transition-colors duration-300 like-btn" data-product-id="{{ $product->id }}">
+                                <i class="far fa-heart"></i>
+                            </button>
+                            <button class="text-2xl text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-300">
+                                <i class="far fa-comment"></i>
+                            </button>
+                            <button class="share-btn text-2xl text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-300"
+                                    data-product-id="{{ $product->id }}"
+                                    data-product-name="{{ $product->name }}"
+                                    data-product-image="{{ $product->productImages->first() ? asset('storage/' . $product->productImages->first()->image_path) : 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=500' }}">
+                                <i class="far fa-share-square"></i>
+                            </button>
                         </div>
-                        <div class="flex items-center justify-between p-2 rounded-lg hover:bg-green-50 dark:hover:bg-gray-700 cursor-pointer transition-colors">
-                            <div class="flex items-center space-x-2">
-                                <i class="fas fa-birthday-cake cake-text text-sm w-4"></i>
-                                <span class="text-gray-700 dark:text-gray-300 text-sm">Cakes & Pastries</span>
-                            </div>
-                            <span class="cake-light cake-text text-xs px-1.5 py-0.5 rounded-full">34</span>
+                        <button class="text-2xl text-gray-400 hover:text-yellow-500 transition-colors duration-300">
+                            <i class="far fa-bookmark"></i>
+                        </button>
+                    </div>
+
+                    <!-- Product Details -->
+                    <div class="p-5">
+                        <h3 class="font-bold text-xl text-gray-800 dark:text-gray-100 mb-3 leading-tight">{{ $product->name }}</h3>
+                        
+                        <div class="flex items-center space-x-3 mb-4">
+                            <span class="price-tag">
+                                <i class="fas fa-tag mr-1"></i>
+                                TZS {{ number_format($product->price) }}
+                            </span>
+                            @if($product->compare_price && $product->compare_price > $product->price)
+                            <span class="text-gray-500 text-sm line-through font-medium">TZS {{ number_format($product->compare_price) }}</span>
+                            @endif
+                        </div>
+
+                        <p class="text-gray-600 dark:text-gray-400 text-base leading-relaxed mb-5">{{ Str::limit($product->description, 200) }}</p>
+
+                        <!-- Action Buttons -->
+                        <div class="space-y-3">
+                            <button onclick="addToCart({{ $product->id }}, '{{ addslashes($product->name) }}', {{ $product->price }})" 
+                                    class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105">
+                                <i class="fas fa-shopping-cart text-lg"></i>
+                                <span class="text-base">Add to Cart</span>
+                            </button>
+
+                            @auth
+                            <button onclick="openContactModal({{ $product->id }}, '{{ $product->seller->store_name ?? 'Seller' }}', {{ $product->seller->user_id ?? 0 }})" 
+                                    class="w-full border-2 border-green-600 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900 py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 hover:shadow-lg">
+                                <i class="fas fa-envelope text-lg"></i>
+                                <span class="text-base">Message Seller</span>
+                            </button>
+                            @else
+                            <button onclick="showLoginAlert()" 
+                                    class="w-full border-2 border-green-600 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900 py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-3 hover:shadow-lg">
+                                <i class="fas fa-envelope text-lg"></i>
+                                <span class="text-base">Message Seller</span>
+                            </button>
+                            @endauth
                         </div>
                     </div>
                 </div>
-
-                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mb-3">Recent Sellers</h3>
-                    <div class="space-y-2">
-                        <div class="flex items-center space-x-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-green-50 dark:hover:bg-gray-600 cursor-pointer transition-colors">
-                            <div class="w-8 h-8 tech-color rounded-full flex items-center justify-center text-white font-bold text-xs">TS</div>
-                            <div class="flex-1 min-w-0">
-                                <p class="font-medium text-gray-800 dark:text-gray-100 text-sm truncate">Tech Store</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">Active now</p>
-                            </div>
-                            <span class="bg-yellow-500 text-white text-xs px-1.5 py-0.5 rounded-full">5</span>
-                        </div>
-                        <div class="flex items-center space-x-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-green-50 dark:hover:bg-gray-600 cursor-pointer transition-colors">
-                            <div class="w-8 h-8 fashion-color rounded-full flex items-center justify-center text-white font-bold text-xs">FH</div>
-                            <div class="flex-1 min-w-0">
-                                <p class="font-medium text-gray-800 dark:text-gray-100 text-sm truncate">Fashion Hub</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">2 min ago</p>
-                            </div>
-                            <span class="bg-yellow-500 text-white text-xs px-1.5 py-0.5 rounded-full">8</span>
-                        </div>
-                        <div class="flex items-center space-x-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-green-50 dark:hover:bg-gray-600 cursor-pointer transition-colors">
-                            <div class="w-8 h-8 book-color rounded-full flex items-center justify-center text-gray-900 dark:text-gray-100 font-bold text-xs">BS</div>
-                            <div class="flex-1 min-w-0">
-                                <p class="font-medium text-gray-800 dark:text-gray-100 text-sm truncate">Book Store</p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">5 min ago</p>
-                            </div>
-                            <span class="bg-yellow-500 text-white text-xs px-1.5 py-0.5 rounded-full">12</span>
-                        </div>
+                @empty
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
+                    <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-search text-gray-400 text-3xl"></i>
                     </div>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3">No products found</h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-lg mb-6">Try adjusting your search criteria or browse different categories.</p>
+                    <button onclick="clearFilters()" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-semibold transition-colors duration-300">
+                        Clear Filters
+                    </button>
+                </div>
+                @endforelse
+
+                <!-- Pagination -->
+                @if($products->hasPages())
+                <div class="flex justify-center mt-8">
+                    {{ $products->links() }}
+                </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- Enhanced Right Sidebar with Rotating Trending Products -->
+        <div class="sidebar-wide hidden lg:block xl:hidden 2xl:block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 h-fit sticky top-32 shadow-lg">
+            <div class="mb-8">
+                <h3 class="font-bold text-xl text-gray-800 dark:text-gray-100 mb-4 flex items-center space-x-2">
+                    <i class="fas fa-fire text-red-500"></i>
+                    <span>Trending Now</span>
+                </h3>
+                <div id="trendingProducts" class="space-y-4">
+                    @if($trendingProducts->count() > 0)
+                        @foreach($trendingProducts->take(3) as $trending)
+                        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-xl hover:shadow-lg transition-all duration-300 cursor-pointer group border border-gray-200 dark:border-gray-600">
+                            <img src="{{ $trending->productImages->first() ? asset('storage/' . $trending->productImages->first()->image_path) : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100' }}" 
+                                 alt="{{ $trending->name }}" 
+                                 class="w-16 h-16 object-cover rounded-xl shadow-sm group-hover:scale-110 transition-transform duration-300">
+                            <div class="flex-1 min-w-0">
+                                <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm leading-tight group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">{{ Str::limit($trending->name, 30) }}</p>
+                                <p class="text-green-600 dark:text-green-400 font-bold text-base mt-1">TZS {{ number_format($trending->price) }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center space-x-1">
+                                    <i class="fas fa-eye"></i>
+                                    <span>{{ $trending->view_count || 0 }} views</span>
+                                </p>
+                            </div>
+                        </div>
+                        @endforeach
+                    @else
+                        <p class="text-gray-500 text-center py-4">No trending products</p>
+                    @endif
                 </div>
             </div>
 
-            <!-- Main Product Feed -->
-            <div class="flex-1 min-w-0">
-                <div class="space-y-4 pb-8">
-                    <!-- Product 1 -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-2">
-                                <div class="w-8 h-8 product-green rounded-full flex items-center justify-center text-white font-bold text-sm">TS</div>
-                                <div>
-                                    <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm">Tech Store</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Dar es Salaam</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-shopping-cart text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-globe text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-ellipsis-h text-sm"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div class="carousel-container flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" style="height: 400px;">
-                                <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500" alt="iPhone Front" class="w-full h-full object-cover snap-center flex-shrink-0">
-                                <img src="https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=500" alt="iPhone Back" class="w-full h-full object-cover snap-center flex-shrink-0">
-                                <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=500" alt="iPhone Box" class="w-full h-full object-cover snap-center flex-shrink-0">
-                            </div>
-                            <div class="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-1.5">
-                                <div class="w-1.5 h-1.5 bg-white rounded-full opacity-100 indicator"></div>
-                                <div class="w-1.5 h-1.5 bg-white rounded-full opacity-50 indicator"></div>
-                                <div class="w-1.5 h-1.5 bg-white rounded-full opacity-50 indicator"></div>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-3">
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-red-500 like-btn"><i class="far fa-heart"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-comment"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-share-square"></i></button>
-                            </div>
-                            <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-yellow-500"><i class="far fa-bookmark"></i></button>
-                        </div>
-
-                        <div class="p-3">
-                            <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mb-2">iPhone 13 Pro 256GB</h3>
-                            <span class="product-green text-white px-3 py-1 rounded-full text-sm font-semibold shadow-sm">TZS 2,500,000</span>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-3 mb-3">Brand new iPhone 13 Pro with 256GB storage. Never used, still in original packaging. Includes warranty and all accessories.</p>
-                            <button onclick="addToCart('iPhone 13 Pro 256GB', 2500000)" class="w-full product-green hover:bg-green-700 dark:hover:bg-green-800 text-white py-2.5 rounded-lg font-semibold transition-colors duration-300 flex items-center justify-center space-x-2 text-sm">
-                                <i class="fas fa-shopping-cart"></i>
-                                <span>Add to Cart</span>
-                            </button>
-                            <div class="mt-3 space-y-2">
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-6 h-6 product-green-light rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center">
-                                        <span class="product-green-text text-xs font-bold">J</span>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-xs"><span class="font-semibold product-green-text">john_doe</span> This looks amazing! Is it still available?</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">1h ago</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 mt-2">
-                                    <input type="text" placeholder="Add a comment..." class="flex-1 border product-green-border rounded-full px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 product-green-light dark:bg-gray-700">
-                                    <button class="product-green-text font-semibold text-xs">Post</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Product 2 -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-2">
-                                <div class="w-8 h-8 product-green rounded-full flex items-center justify-center text-white font-bold text-sm">BS</div>
-                                <div>
-                                    <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm">Book Store</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Online</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-shopping-cart text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-globe text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-ellipsis-h text-sm"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=500" alt="Business Book" class="w-full h-80 object-cover">
-                            <div class="absolute top-3 right-3 product-green text-white px-2 py-1 rounded-lg text-xs font-semibold">PDF Download</div>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-3">
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-red-500 like-btn"><i class="far fa-heart"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-comment"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-share-square"></i></button>
-                            </div>
-                            <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-yellow-500"><i class="far fa-bookmark"></i></button>
-                        </div>
-
-                        <div class="p-3">
-                            <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mb-2">Business Strategy Guide - PDF</h3>
-                            <span class="product-green text-white px-3 py-1 rounded-full text-sm font-semibold shadow-sm">TZS 15,000</span>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-3 mb-3">Complete guide to business strategy and entrepreneurship. 200+ pages of valuable insights, case studies, and practical advice.</p>
-                            <button onclick="addToCart('Business Strategy Guide - PDF', 15000)" class="w-full product-green hover:bg-green-700 dark:hover:bg-green-800 text-white py-2.5 rounded-lg font-semibold transition-colors duration-300 flex items-center justify-center space-x-2 text-sm">
-                                <i class="fas fa-shopping-cart"></i>
-                                <span>Add to Cart</span>
-                            </button>
-                            <div class="mt-3 space-y-2">
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-6 h-6 product-green-light rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center">
-                                        <span class="product-green-text text-xs font-bold">E</span>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-xs"><span class="font-semibold product-green-text">entrepreneur_tz</span> This book changed my business perspective!</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">3h ago</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 mt-2">
-                                    <input type="text" placeholder="Add a comment..." class="flex-1 border product-green-border rounded-full px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 product-green-light dark:bg-gray-700">
-                                    <button class="product-green-text font-semibold text-xs">Post</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Product 3 -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-2">
-                                <div class="w-8 h-8 product-green rounded-full flex items-center justify-center text-white font-bold text-sm">FH</div>
-                                <div>
-                                    <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm">Fashion Hub</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Arusha</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-shopping-cart text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-globe text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-ellipsis-h text-sm"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <div class="carousel-container flex overflow-x-auto snap-x snap-mandatory scrollbar-hide" style="height: 400px;">
-                                <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500" alt="Dress Front" class="w-full h-full object-cover snap-center flex-shrink-0">
-                                <img src="https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500" alt="Dress Back" class="w-full h-full object-cover snap-center flex-shrink-0">
-                            </div>
-                            <div class="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-1.5">
-                                <div class="w-1.5 h-1.5 bg-white rounded-full opacity-100 indicator"></div>
-                                <div class="w-1.5 h-1.5 bg-white rounded-full opacity-50 indicator"></div>
-                            </div>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-3">
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-red-500 like-btn"><i class="far fa-heart"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-comment"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-share-square"></i></button>
-                            </div>
-                            <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-yellow-500"><i class="far fa-bookmark"></i></button>
-                        </div>
-
-                        <div class="p-3">
-                            <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mb-2">African Print Dress - Size M</h3>
-                            <span class="product-green text-white px-3 py-1 rounded-full text-sm font-semibold shadow-sm">TZS 85,000</span>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-3 mb-3">Beautiful African print dress made from high-quality fabric. Perfect for special occasions.</p>
-                            <button onclick="addToCart('African Print Dress - Size M', 85000)" class="w-full product-green hover:bg-green-700 dark:hover:bg-green-800 text-white py-2.5 rounded-lg font-semibold transition-colors duration-300 flex items-center justify-center space-x-2 text-sm">
-                                <i class="fas fa-shopping-cart"></i>
-                                <span>Add to Cart</span>
-                            </button>
-                            <div class="mt-3 space-y-2">
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-6 h-6 product-green-light rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center">
-                                        <span class="product-green-text text-xs font-bold">F</span>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-xs"><span class="font-semibold product-green-text">fashion_guru</span> Love the pattern!</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">30m ago</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 mt-2">
-                                    <input type="text" placeholder="Add a comment..." class="flex-1 border product-green-border rounded-full px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 product-green-light dark:bg-gray-700">
-                                    <button class="product-green-text font-semibold text-xs">Post</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Product 4 -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-2">
-                                <div class="w-8 h-8 product-green rounded-full flex items-center justify-center text-white font-bold text-sm">AD</div>
-                                <div>
-                                    <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm">Auto Deals</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Dar es Salaam</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-shopping-cart text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-globe text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-ellipsis-h text-sm"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=500" alt="Toyota RAV4" class="w-full h-80 object-cover">
-                            <div class="absolute top-3 right-3 product-green text-white px-2 py-1 rounded-lg text-xs font-semibold">2023 Model</div>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-3">
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-red-500 like-btn"><i class="far fa-heart"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-comment"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-share-square"></i></button>
-                            </div>
-                            <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-yellow-500"><i class="far fa-bookmark"></i></button>
-                        </div>
-
-                        <div class="p-3">
-                            <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mb-2">Toyota RAV4 2023</h3>
-                            <span class="product-green text-white px-3 py-1 rounded-full text-sm font-semibold shadow-sm">TZS 45,000,000</span>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-3 mb-3">Brand new Toyota RAV4 2023 model. 1500cc engine, automatic transmission.</p>
-                            <button onclick="addToCart('Toyota RAV4 2023', 45000000)" class="w-full product-green hover:bg-green-700 dark:hover:bg-green-800 text-white py-2.5 rounded-lg font-semibold transition-colors duration-300 flex items-center justify-center space-x-2 text-sm">
-                                <i class="fas fa-shopping-cart"></i>
-                                <span>Add to Cart</span>
-                            </button>
-                            <div class="mt-3 space-y-2">
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-6 h-6 product-green-light rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center">
-                                        <span class="product-green-text text-xs font-bold">C</span>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-xs"><span class="font-semibold product-green-text">car_lover</span> Is financing available?</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">2h ago</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 mt-2">
-                                    <input type="text" placeholder="Add a comment..." class="flex-1 border product-green-border rounded-full px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 product-green-light dark:bg-gray-700">
-                                    <button class="product-green-text font-semibold text-xs">Post</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Product 5 -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-2">
-                                <div class="w-8 h-8 product-green rounded-full flex items-center justify-center text-white font-bold text-sm">CS</div>
-                                <div>
-                                    <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm">Cake Shop</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Mwanza</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-shopping-cart text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-globe text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-ellipsis-h text-sm"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=500" alt="Birthday Cake" class="w-full h-80 object-cover">
-                            <div class="absolute top-3 right-3 product-green text-white px-2 py-1 rounded-lg text-xs font-semibold">Custom Order</div>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-3">
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-red-500 like-btn"><i class="far fa-heart"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-comment"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-share-square"></i></button>
-                            </div>
-                            <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-yellow-500"><i class="far fa-bookmark"></i></button>
-                        </div>
-
-                        <div class="p-3">
-                            <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mb-2">Custom Birthday Cake - 2kg</h3>
-                            <span class="product-green text-white px-3 py-1 rounded-full text-sm font-semibold shadow-sm">TZS 45,000</span>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-3 mb-3">Beautiful custom birthday cake with buttercream frosting. 2kg size.</p>
-                            <button onclick="addToCart('Custom Birthday Cake - 2kg', 45000)" class="w-full product-green hover:bg-green-700 dark:hover:bg-green-800 text-white py-2.5 rounded-lg font-semibold transition-colors duration-300 flex items-center justify-center space-x-2 text-sm">
-                                <i class="fas fa-shopping-cart"></i>
-                                <span>Add to Cart</span>
-                            </button>
-                            <div class="mt-3 space-y-2">
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-6 h-6 product-green-light rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center">
-                                        <span class="product-green-text text-xs font-bold">B</span>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-xs"><span class="font-semibold product-green-text">birthday_planner</span> Can I customize the message?</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">1h ago</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 mt-2">
-                                    <input type="text" placeholder="Add a comment..." class="flex-1 border product-green-border rounded-full px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 product-green-light dark:bg-gray-700">
-                                    <button class="product-green-text font-semibold text-xs">Post</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Product 6 -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-2">
-                                <div class="w-8 h-8 product-green rounded-full flex items-center justify-center text-white font-bold text-sm">ES</div>
-                                <div>
-                                    <p class="font-semibold text-gray-800 dark:text-gray-100 text-sm">Electro Store</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Dodoma</p>
-                                </div>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-shopping-cart text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-globe text-sm"></i></button>
-                                <button class="text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="fas fa-ellipsis-h text-sm"></i></button>
-                            </div>
-                        </div>
-
-                        <div class="relative">
-                            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500" alt="Headphones" class="w-full h-80 object-cover">
-                            <div class="absolute top-3 right-3 product-green text-white px-2 py-1 rounded-lg text-xs font-semibold">Noise Cancelling</div>
-                        </div>
-
-                        <div class="flex items-center justify-between p-3 border-b border-gray-100 dark:border-gray-700">
-                            <div class="flex items-center space-x-3">
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-red-500 like-btn"><i class="far fa-heart"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-comment"></i></button>
-                                <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"><i class="far fa-share-square"></i></button>
-                            </div>
-                            <button class="text-xl text-gray-600 dark:text-gray-400 hover:text-yellow-500"><i class="far fa-bookmark"></i></button>
-                        </div>
-
-                        <div class="p-3">
-                            <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mb-2">Wireless Headphones Pro</h3>
-                            <span class="product-green text-white px-3 py-1 rounded-full text-sm font-semibold shadow-sm">TZS 120,000</span>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm mt-3 mb-3">Premium wireless headphones with active noise cancellation. 30-hour battery life.</p>
-                            <button onclick="addToCart('Wireless Headphones Pro', 120000)" class="w-full product-green hover:bg-green-700 dark:hover:bg-green-800 text-white py-2.5 rounded-lg font-semibold transition-colors duration-300 flex items-center justify-center space-x-2 text-sm">
-                                <i class="fas fa-shopping-cart"></i>
-                                <span>Add to Cart</span>
-                            </button>
-                            <div class="mt-3 space-y-2">
-                                <div class="flex items-start space-x-2">
-                                    <div class="w-6 h-6 product-green-light rounded-full flex-shrink-0 mt-0.5 flex items-center justify-center">
-                                        <span class="product-green-text text-xs font-bold">M</span>
-                                    </div>
-                                    <div class="flex-1">
-                                        <p class="text-xs"><span class="font-semibold product-green-text">music_lover</span> How's the sound quality?</p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">45m ago</p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 mt-2">
-                                    <input type="text" placeholder="Add a comment..." class="flex-1 border product-green-border rounded-full px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500 product-green-light dark:bg-gray-700">
-                                    <button class="product-green-text font-semibold text-xs">Post</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center space-x-2">
+                        <i class="fas fa-shopping-cart text-green-600"></i>
+                        <span>Your Cart</span>
+                    </h3>
+                    <span class="bg-green-600 text-white text-sm px-3 py-1 rounded-full font-semibold shadow-sm cart-count">0 items</span>
                 </div>
-            </div>
-
-            <!-- Right Sidebar -->
-            <div class="sidebar-wide hidden lg:block bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 h-fit sticky top-28">
-                <div class="mb-6">
-                    <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100 mb-3">Trending Now</h3>
-                    <div class="space-y-3">
-                        <div class="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-green-50 dark:hover:bg-gray-600 cursor-pointer transition-colors">
-                            <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100" alt="Headphones" class="w-12 h-12 object-cover rounded-lg">
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">Wireless Headphones Pro</p>
-                                <p class="text-green-600 dark:text-green-400 font-semibold text-xs">TZS 120,000</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-green-50 dark:hover:bg-gray-600 cursor-pointer transition-colors">
-                            <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=100" alt="Book" class="w-12 h-12 object-cover rounded-lg">
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">Business Strategy Guide</p>
-                                <p class="text-green-600 dark:text-green-400 font-semibold text-xs">TZS 15,000</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-green-50 dark:hover:bg-gray-600 cursor-pointer transition-colors">
-                            <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=100" alt="Dress" class="w-12 h-12 object-cover rounded-lg">
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">African Print Dress</p>
-                                <p class="text-green-600 dark:text-green-400 font-semibold text-xs">TZS 85,000</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-green-50 dark:hover:bg-gray-600 cursor-pointer transition-colors">
-                            <img src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=100" alt="Car" class="w-12 h-12 object-cover rounded-lg">
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">Toyota RAV4 2023</p>
-                                <p class="text-green-600 dark:text-green-400 font-semibold text-xs">TZS 45M</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-3 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-green-50 dark:hover:bg-gray-600 cursor-pointer transition-colors">
-                            <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=100" alt="Cake" class="w-12 h-12 object-cover rounded-lg">
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">Custom Birthday Cake</p>
-                                <p class="text-green-600 dark:text-green-400 font-semibold text-xs">TZS 45,000</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-gradient-to-r from-yellow-400 to-orange-500 text-white p-5 rounded-xl text-center shadow-md mb-6">
-                    <h4 class="font-bold text-lg mb-2">Special Offer!</h4>
-                    <p class="text-sm mb-3">Get 20% OFF on all Electronics this week!</p>
-                    <button class="bg-white text-orange-600 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-gray-100 transition">
-                        Shop Now
-                    </button>
-                </div>
-
-                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-lg text-gray-800 dark:text-gray-100">Your Cart</h3>
-                        <span class="bg-green-600 text-white text-xs px-2 py-1 rounded-full cart-count">3 items</span>
-                    </div>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm mb-3 cart-total">Total: TZS 2,635,000</p>
-                    <button onclick="openCartModal()" class="w-full bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-800 text-white py-2.5 rounded-lg font-semibold transition-colors duration-300 text-sm">
-                        View Cart
-                    </button>
-                </div>
+                <p class="text-gray-600 dark:text-gray-400 text-lg mb-4 font-semibold cart-total">Total: TZS 0</p>
+                <button onclick="openCart()" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3.5 rounded-xl font-semibold transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>View Cart</span>
+                </button>
             </div>
         </div>
     </div>
-
-    <script>
-        // === DARK MODE TOGGLE ===
-        const themeToggle = document.getElementById('themeToggle');
-        const html = document.documentElement;
-
-        if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            html.classList.add('dark');
-            themeToggle.innerHTML = '<i class="fas fa-sun text-lg"></i>';
-        } else {
-            themeToggle.innerHTML = '<i class="fas fa-moon text-lg"></i>';
-        }
-
-        themeToggle.addEventListener('click', () => {
-            html.classList.toggle('dark');
-            if (html.classList.contains('dark')) {
-                localStorage.setItem('theme', 'dark');
-                themeToggle.innerHTML = '<i class="fas fa-sun text-lg"></i>';
-            } else {
-                localStorage.setItem('theme', 'light');
-                themeToggle.innerHTML = '<i class="fas fa-moon text-lg"></i>';
-            }
-        });
-
-        // === DROPDOWN ===
-        function toggleDropdown() {
-            document.getElementById('accountDropdown').classList.toggle('active');
-        }
-        document.addEventListener('click', (e) => {
-            const dropdown = document.getElementById('accountDropdown');
-            if (!dropdown.contains(e.target)) {
-                dropdown.classList.remove('active');
-            }
-        });
-
-        // === CART ===
-        let cartItems = [
-            { name: 'iPhone 13 Pro 256GB', price: 2500000, quantity: 1 },
-            { name: 'Running Shoes', price: 120000, quantity: 1 }
-        ];
-
-        function updateCartDisplay() {
-            const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-            const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) + 15000;
-            document.querySelectorAll('.cart-count').forEach(el => el.textContent = `${totalItems} items`);
-            document.querySelector('.cart-total').textContent = `Total: TZS ${totalAmount.toLocaleString()}`;
-        }
-
-        function addToCart(name, price) {
-            const item = cartItems.find(i => i.name === name);
-            if (item) item.quantity++;
-            else cartItems.push({ name, price, quantity: 1 });
-            updateCartDisplay();
-            openCartModal();
-            alert(`${name} added to cart!`);
-        }
-
-        // === MODALS ===
-        function openLanguageModal() { document.getElementById('languageModal').classList.remove('hidden'); }
-        function closeLanguageModal() { document.getElementById('languageModal').classList.add('hidden'); }
-        function openCartModal() { document.getElementById('cartModal').classList.remove('hidden'); }
-        function closeCartModal() { document.getElementById('cartModal').classList.add('hidden'); }
-        function proceedToCheckout() { alert('Redirecting to checkout...'); }
-
-        // === CAROUSEL & LIKE ===
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.carousel-container').forEach(carousel => {
-                const images = carousel.querySelectorAll('img');
-                const indicators = carousel.parentElement.querySelectorAll('.indicator');
-                if (images.length <= 1) return;
-                let currentIndex = 0;
-                const updateIndicators = () => {
-                    indicators.forEach((ind, i) => {
-                        ind.classList.toggle('opacity-100', i === currentIndex);
-                        ind.classList.toggle('opacity-50', i !== currentIndex);
-                    });
-                };
-                let startX = 0;
-                const handleEnd = (endX) => {
-                    const diff = startX - endX;
-                    if (Math.abs(diff) > 50) {
-                        if (diff > 0 && currentIndex < images.length - 1) currentIndex++;
-                        else if (diff < 0 && currentIndex > 0) currentIndex--;
-                        images[currentIndex].scrollIntoView({ behavior: 'smooth', inline: 'center' });
-                        updateIndicators();
-                    }
-                };
-                carousel.addEventListener('mousedown', e => { startX = e.clientX; });
-                carousel.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
-                carousel.addEventListener('mouseup', e => handleEnd(e.clientX));
-                carousel.addEventListener('touchend', e => handleEnd(e.changedTouches[0].clientX));
-                indicators.forEach((ind, i) => {
-                    ind.addEventListener('click', () => {
-                        currentIndex = i;
-                        images[i].scrollIntoView({ behavior: 'smooth', inline: 'center' });
-                        updateIndicators();
-                    });
-                });
-                updateIndicators();
-            });
-
-            document.querySelectorAll('.like-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    this.classList.toggle('far');
-                    this.classList.toggle('fas');
-                    this.classList.toggle('text-red-500');
-                });
-            });
-
-            document.addEventListener('click', (e) => {
-                ['languageModal', 'cartModal'].forEach(id => {
-                    const modal = document.getElementById(id);
-                    if (modal && !modal.classList.contains('hidden') && e.target === modal) {
-                        modal.classList.add('hidden');
-                    }
-                });
-            });
-
-            updateCartDisplay();
-        });
-    </script>
-</body>
-</html>
+</div>
+@endsection

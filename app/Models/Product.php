@@ -9,55 +9,81 @@ class Product extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['seller_id', 'category_id', 'name', 'name_sw', 'slug', 'description', 'description_sw', 'price', 'compare_price', 'quantity', 'sku', 'condition', 'status', 'is_featured', 'is_approved', 'approved_by', 'approved_at', 'view_count', 'location', 'latitude', 'longitude'];
+    protected $fillable = [
+        'seller_id', 'category_id', 'name', 'name_sw', 'slug', 'description', 'description_sw',
+        'price', 'compare_price', 'quantity', 'sku', 'condition', 'status', 'is_featured',
+        'is_approved', 'approved_by', 'approved_at', 'view_count', 'location', 'latitude', 'longitude'
+    ];
+
     protected $casts = [
-        'price' => 'decimal:10,2',
-        'compare_price' => 'decimal:10,2',
-        'quantity' => 'integer',
+        'price' => 'decimal:2',
+        'compare_price' => 'decimal:2',
         'is_featured' => 'boolean',
         'is_approved' => 'boolean',
         'approved_at' => 'datetime',
-        'latitude' => 'decimal:10,8',
-        'longitude' => 'decimal:11,8',
     ];
 
+    // Relationship with seller
     public function seller()
     {
-        return $this->belongsTo(SellerProfile::class, 'seller_id', 'id');
+        return $this->belongsTo(Seller::class, 'seller_id');
     }
 
+    // Relationship with category
     public function category()
     {
-        return $this->belongsTo(Category::class, 'category_id', 'id');
+        return $this->belongsTo(Category::class);
     }
 
-    public function approver()
-    {
-        return $this->belongsTo(User::class, 'approved_by', 'id');
-    }
-
+    // Relationship with product images - FIXED NAME
     public function productImages()
     {
-        return $this->hasMany(ProductImage::class, 'product_id', 'id');
+        return $this->hasMany(ProductImage::class);
     }
 
-    public function conversations()
-    {
-        return $this->hasMany(Conversation::class, 'product_id', 'id');
-    }
-
+    // Relationship with favorites
     public function favorites()
     {
-        return $this->hasMany(Favorite::class, 'product_id', 'id');
+        return $this->hasMany(Favorite::class);
     }
 
-    public function productViews()
+    // Relationship with cart items
+    public function cartItems()
     {
-        return $this->hasMany(ProductView::class, 'product_id', 'id');
+        return $this->hasMany(Cart::class);
     }
 
-    public function orders()
+    // Relationship with order items
+    public function orderItems()
     {
-        return $this->hasMany(Order::class, 'product_id', 'id');
+        return $this->hasMany(OrderItem::class);
+    }
+
+    // Get primary image
+    public function getPrimaryImageAttribute()
+    {
+        $primaryImage = $this->productImages()->where('is_primary', true)->first();
+        return $primaryImage ? $primaryImage->image_path : null;
+    }
+
+    // Get all images
+    public function getAllImagesAttribute()
+    {
+        return $this->productImages()->orderBy('is_primary', 'desc')->get();
+    }
+
+    // Check if product is in stock
+    public function getInStockAttribute()
+    {
+        return $this->quantity > 0;
+    }
+
+    // Calculate discount percentage
+    public function getDiscountPercentageAttribute()
+    {
+        if ($this->compare_price && $this->compare_price > $this->price) {
+            return round((($this->compare_price - $this->price) / $this->compare_price) * 100);
+        }
+        return 0;
     }
 }
