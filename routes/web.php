@@ -139,6 +139,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/products/{id}', [SellerController::class, 'updateProduct'])->name('seller.products.update');
         Route::delete('/products/{id}', [SellerController::class, 'deleteProduct'])->name('seller.products.delete');
         Route::get('/my-purchase-orders', [SellerController::class, 'myPurchaseOrders'])->name('seller.my-purchase-orders');
+        Route::get('/products/search/live', [ProductController::class, 'liveSearch'])->name('products.search.live');
         Route::get('/my-purchase-orders/{id}', [SellerController::class, 'viewPurchaseOrder'])->name('seller.purchase-orders.show');
         
         // Existing sales orders routes

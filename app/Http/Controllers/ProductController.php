@@ -13,6 +13,54 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+    // Add this static method to get category icons
+    public static function getCategoryIconStatic($categoryName)
+    {
+        $icons = [
+            'electronics' => 'mobile-alt',
+            'fashion' => 'tshirt',
+            'home' => 'home',
+            'sports' => 'futbol',
+            'books' => 'book',
+            'beauty' => 'spa',
+            'toys' => 'gamepad',
+            'food' => 'utensils',
+            'health' => 'heartbeat',
+            'automotive' => 'car',
+            'garden' => 'seedling',
+            'music' => 'music',
+            'art' => 'palette',
+            'jewelry' => 'gem',
+            'shoes' => 'shoe-prints',
+            'bags' => 'shopping-bag',
+            'watches' => 'clock',
+            'furniture' => 'couch',
+            'phones' => 'mobile',
+            'laptops' => 'laptop',
+            'cameras' => 'camera',
+            'tv' => 'tv',
+            'clothing' => 'tshirt',
+            'computers' => 'laptop',
+            'accessories' => 'gem',
+            'default' => 'tag'
+        ];
+        
+        $name = strtolower($categoryName);
+        foreach ($icons as $key => $icon) {
+            if (str_contains($name, $key)) {
+                return $icon;
+            }
+        }
+        
+        return $icons['default'];
+    }
+
+    // Instance method for non-static usage
+    private function getCategoryIcon($categoryName)
+    {
+        return self::getCategoryIconStatic($categoryName);
+    }
+
     public function index(Request $request) 
     {
         // Query products with relationships - FIXED: Removed brand references
@@ -205,21 +253,14 @@ class ProductController extends Controller
                     'price' => $product->price,
                     'compare_price' => $product->compare_price,
                     'description' => $product->description,
-                    'seller' => [
-                        'store_name' => $product->seller->store_name ?? null,
-                        'business_place' => $product->seller->business_place ?? null,
-                        'user_id' => $product->seller->user_id ?? null,
-                    ],
+                    'seller_store_name' => $product->seller->store_name ?? null,
+                    'seller_business_place' => $product->seller->business_place ?? null,
                     'product_images' => $product->productImages->map(function($image) {
                         return [
                             'image_path' => $image->image_path,
                             'id' => $image->id
                         ];
                     }),
-                    'category' => $product->category ? [
-                        'name' => $product->category->name,
-                        'id' => $product->category->id
-                    ] : null,
                     'view_count' => $product->view_count
                 ];
             });
