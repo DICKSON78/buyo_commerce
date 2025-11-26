@@ -159,6 +159,24 @@
     </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+    @php
+        // Fallback calculations ikiwa variables hazipo
+        $cartItems = $cartItems ?? [];
+        $subtotal = $subtotal ?? 0;
+        $shippingFee = $shippingFee ?? 15000;
+        $taxAmount = $taxAmount ?? 0;
+        $totalAmount = $totalAmount ?? 0;
+        
+        // Recalculate ikiwa subtotal haipo
+        if ($subtotal == 0 && !empty($cartItems)) {
+            $subtotal = collect($cartItems)->sum(function($item) {
+                return ($item['price'] ?? 0) * ($item['quantity'] ?? 0);
+            });
+            $taxAmount = $subtotal * 0.18;
+            $totalAmount = $subtotal + $shippingFee + $taxAmount;
+        }
+    @endphp
+
     <!-- Top Navigation Bar -->
     <nav class="fixed top-0 w-full nav-green shadow-sm z-50">
         <div class="max-w-7xl mx-auto px-3 sm:px-6">
@@ -186,25 +204,34 @@
                     <!-- Cart -->
                     <button class="text-white hover:text-yellow-300 transition-colors relative" title="Cart">
                         <i class="fas fa-shopping-cart text-lg"></i>
-                        <span class="absolute -top-2 -right-2 bg-yellow-500 text-gray-900 dark:text-gray-100 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">3</span>
+                        <span class="absolute -top-2 -right-2 bg-yellow-500 text-gray-900 dark:text-gray-100 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold cart-count">{{ count($cartItems) }}</span>
                     </button>
 
                     <!-- User Account Dropdown -->
                     <div class="dropdown" id="accountDropdown">
                         <button onclick="toggleDropdown()" class="text-white hover:text-yellow-300 transition-colors relative" title="Account">
                             <i class="fas fa-user text-lg"></i>
-                            <span class="absolute -top-2 -right-2 bg-yellow-500 text-gray-900 dark:text-gray-100 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">JD</span>
+                            <span class="absolute -top-2 -right-2 bg-yellow-500 text-gray-900 dark:text-gray-100 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                                {{ strtoupper(substr($user->first_name ?? ($user->username ?? 'U'), 0, 1)) }}{{ strtoupper(substr($user->last_name ?? '', 0, 1)) }}
+                            </span>
                         </button>
                         <div class="dropdown-content">
-                            <a href="customer-dashboard.html"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                            <a href="{{ route('customer.dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
                             <a href="#"><i class="fas fa-cog"></i> Settings</a>
-                            <a href="#" class="text-red-600 dark:text-red-400"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="text-red-600 dark:text-red-400">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </nav>
+
+    <!-- Logout Form -->
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+        @csrf
+    </form>
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-2 sm:px-4 pt-20 pb-20 sm:pb-0">
@@ -221,7 +248,7 @@
                     <div class="step-number completed">1</div>
                     <div class="step-content">
                         <p class="font-semibold text-gray-800 dark:text-gray-100">Cart Review</p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">items selected</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ count($cartItems) }} items selected</p>
                     </div>
                 </div>
                 <div class="progress-step">
@@ -312,32 +339,33 @@
                             </div>
                         </div>
                         
-                        <form class="space-y-6">
+                        <form class="space-y-6" id="customer-form">
+                            @csrf
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">First Name *</label>
-                                    <input type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Enter first name" required>
+                                    <input type="text" name="first_name" value="{{ $user->first_name ?? '' }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Enter first name" required>
                                 </div>
                                 <div>
                                     <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Last Name *</label>
-                                    <input type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Enter last name" required>
+                                    <input type="text" name="last_name" value="{{ $user->last_name ?? '' }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Enter last name" required>
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Email Address *</label>
-                                    <input type="email" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="your@email.com" required>
+                                    <input type="email" name="email" value="{{ $user->email ?? '' }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="your@email.com" required>
                                 </div>
                                 <div>
                                     <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Phone Number *</label>
-                                    <input type="tel" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="+255 XXX XXX XXX" required>
+                                    <input type="tel" name="phone" value="{{ $user->phone ?? '' }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="+255 XXX XXX XXX" required>
                                 </div>
                             </div>
 
                             <div>
                                 <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Additional Notes (Optional)</label>
-                                <textarea rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Any special instructions for your order..."></textarea>
+                                <textarea name="additional_notes" rows="3" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Any special instructions for your order..."></textarea>
                             </div>
 
                             <div class="flex justify-end">
@@ -360,31 +388,31 @@
                             </div>
                         </div>
                         
-                        <form class="space-y-6">
+                        <form class="space-y-6" id="shipping-form">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Region *</label>
-                                    <select class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" required>
+                                    <select name="shipping_region" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" required>
                                         <option value="">Select Region</option>
-                                        <option>Dar es Salaam</option>
-                                        <option>Arusha</option>
-                                        <option>Mwanza</option>
-                                        <option>Dodoma</option>
-                                        <option>Mbeya</option>
-                                        <option>Morogoro</option>
-                                        <option>Tanga</option>
-                                        <option>Other</option>
+                                        <option value="Dar es Salaam">Dar es Salaam</option>
+                                        <option value="Arusha">Arusha</option>
+                                        <option value="Mwanza">Mwanza</option>
+                                        <option value="Dodoma">Dodoma</option>
+                                        <option value="Mbeya">Mbeya</option>
+                                        <option value="Morogoro">Morogoro</option>
+                                        <option value="Tanga">Tanga</option>
+                                        <option value="Other">Other</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">City/District *</label>
-                                    <input type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Enter your city" required>
+                                    <input type="text" name="shipping_city" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Enter your city" required>
                                 </div>
                             </div>
 
                             <div>
                                 <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Street Address *</label>
-                                <input type="text" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Enter your street address" required>
+                                <input type="text" name="shipping_address" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Enter your street address" required>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -392,24 +420,24 @@
                                     <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Shipping Method *</label>
                                     <div class="space-y-3">
                                         <label class="flex items-center space-x-3 p-3 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                                            <input type="radio" name="shipping" value="standard" class="text-green-600 focus:ring-green-500" checked>
+                                            <input type="radio" name="shipping_method" value="standard" class="text-green-600 focus:ring-green-500" checked>
                                             <div class="flex-1">
                                                 <p class="font-medium text-gray-800 dark:text-gray-100">Standard Delivery</p>
-                                                <p class="text-sm text-gray-600 dark:text-gray-400">5-7 business days - TZS 10,000</p>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">5-7 business days - TZS <span class="standard-shipping">{{ number_format($shippingFee) }}</span></p>
                                             </div>
                                         </label>
                                         <label class="flex items-center space-x-3 p-3 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
-                                            <input type="radio" name="shipping" value="express" class="text-green-600 focus:ring-green-500">
+                                            <input type="radio" name="shipping_method" value="express" class="text-green-600 focus:ring-green-500">
                                             <div class="flex-1">
                                                 <p class="font-medium text-gray-800 dark:text-gray-100">Express Delivery</p>
-                                                <p class="text-sm text-gray-600 dark:text-gray-400">2-3 business days - TZS 25,000</p>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">2-3 business days - TZS <span class="express-shipping">{{ number_format($shippingFee + 15000) }}</span></p>
                                             </div>
                                         </label>
                                     </div>
                                 </div>
                                 <div>
                                     <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Delivery Instructions</label>
-                                    <textarea rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Any special delivery instructions..."></textarea>
+                                    <textarea name="delivery_instructions" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200" placeholder="Any special delivery instructions..."></textarea>
                                 </div>
                             </div>
 
@@ -441,7 +469,7 @@
                                 <label class="block text-gray-700 dark:text-gray-300 font-medium mb-4">Select Payment Method *</label>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <label class="flex items-center space-x-3 p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-green-500 payment-option">
-                                        <input type="radio" name="payment" value="mpesa" class="text-green-600 focus:ring-green-500">
+                                        <input type="radio" name="payment_method" value="mpesa" class="text-green-600 focus:ring-green-500">
                                         <div class="flex-1">
                                             <div class="flex items-center justify-between">
                                                 <p class="font-medium text-gray-800 dark:text-gray-100">M-Pesa</p>
@@ -452,7 +480,7 @@
                                     </label>
 
                                     <label class="flex items-center space-x-3 p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-green-500 payment-option">
-                                        <input type="radio" name="payment" value="tigopesa" class="text-green-600 focus:ring-green-500">
+                                        <input type="radio" name="payment_method" value="tigopesa" class="text-green-600 focus:ring-green-500">
                                         <div class="flex-1">
                                             <div class="flex items-center justify-between">
                                                 <p class="font-medium text-gray-800 dark:text-gray-100">Tigo Pesa</p>
@@ -463,7 +491,7 @@
                                     </label>
 
                                     <label class="flex items-center space-x-3 p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-green-500 payment-option">
-                                        <input type="radio" name="payment" value="airtel" class="text-green-600 focus:ring-green-500">
+                                        <input type="radio" name="payment_method" value="airtel" class="text-green-600 focus:ring-green-500">
                                         <div class="flex-1">
                                             <div class="flex items-center justify-between">
                                                 <p class="font-medium text-gray-800 dark:text-gray-100">Airtel Money</p>
@@ -474,7 +502,7 @@
                                     </label>
 
                                     <label class="flex items-center space-x-3 p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-green-500 payment-option">
-                                        <input type="radio" name="payment" value="card" class="text-green-600 focus:ring-green-500">
+                                        <input type="radio" name="payment_method" value="card" class="text-green-600 focus:ring-green-500">
                                         <div class="flex-1">
                                             <div class="flex items-center justify-between">
                                                 <p class="font-medium text-gray-800 dark:text-gray-100">Credit/Debit Card</p>
@@ -488,7 +516,7 @@
                                     </label>
 
                                     <label class="flex items-center space-x-3 p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-green-500 payment-option">
-                                        <input type="radio" name="payment" value="cash" class="text-green-600 focus:ring-green-500" checked>
+                                        <input type="radio" name="payment_method" value="cash_on_delivery" class="text-green-600 focus:ring-green-500" checked>
                                         <div class="flex-1">
                                             <div class="flex items-center justify-between">
                                                 <p class="font-medium text-gray-800 dark:text-gray-100">Cash on Delivery</p>
@@ -503,7 +531,7 @@
                             <!-- Payment Instructions -->
                             <div id="payment-instructions" class="p-4 bg-green-50 dark:bg-green-900 rounded-lg border border-green-200 dark:border-green-700">
                                 <h4 class="font-semibold text-green-800 dark:text-green-200 mb-2">Cash on Delivery Instructions</h4>
-                                <p class="text-green-700 dark:text-green-300 text-sm">You'll pay when you receive your order. Our delivery agent will collect the payment in cash.</p>
+                                <p class="text-green-700 dark:text-green-300 text-sm">You'll pay TZS {{ number_format($totalAmount) }} when you receive your order. Our delivery agent will collect the payment in cash.</p>
                             </div>
 
                             <div class="flex justify-between">
@@ -532,28 +560,21 @@
                         <div class="space-y-6">
                             <!-- Order Summary -->
                             <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                                <h3 class="font-bold text-gray-800 dark:text-gray-100 mb-4">Order Items (3)</h3>
+                                <h3 class="font-bold text-gray-800 dark:text-gray-100 mb-4">Order Items ({{ count($cartItems) }})</h3>
                                 <div class="space-y-3">
+                                    @foreach($cartItems as $item)
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center space-x-3">
-                                            <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=60" alt="iPhone" class="w-12 h-12 object-cover rounded-lg">
+                                            <img src="{{ ($item['image'] ?? false) ? asset('storage/' . $item['image']) : 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=60' }}" 
+                                                 alt="{{ $item['name'] ?? 'Product' }}" class="w-12 h-12 object-cover rounded-lg">
                                             <div>
-                                                <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">iPhone 13 Pro 256GB</p>
-                                                <p class="text-gray-600 dark:text-gray-400 text-xs">Qty: 1</p>
+                                                <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">{{ Str::limit($item['name'] ?? 'Product', 30) }}</p>
+                                                <p class="text-gray-600 dark:text-gray-400 text-xs">Qty: {{ $item['quantity'] ?? 0 }}</p>
                                             </div>
                                         </div>
-                                        <p class="text-green-600 dark:text-green-400 font-semibold">TZS 2,500,000</p>
+                                        <p class="text-green-600 dark:text-green-400 font-semibold">TZS {{ number_format(($item['price'] ?? 0) * ($item['quantity'] ?? 0)) }}</p>
                                     </div>
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center space-x-3">
-                                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=60" alt="Shoes" class="w-12 h-12 object-cover rounded-lg">
-                                            <div>
-                                                <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">Running Shoes</p>
-                                                <p class="text-gray-600 dark:text-gray-400 text-xs">Qty: 1</p>
-                                            </div>
-                                        </div>
-                                        <p class="text-green-600 dark:text-green-400 font-semibold">TZS 120,000</p>
-                                    </div>
+                                    @endforeach
                                 </div>
                             </div>
 
@@ -562,17 +583,17 @@
                                 <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                                     <h3 class="font-bold text-gray-800 dark:text-gray-100 mb-3">Customer Information</h3>
                                     <div class="space-y-2 text-sm">
-                                        <p><strong>Name:</strong> John Doe</p>
-                                        <p><strong>Email:</strong> john.doe@email.com</p>
-                                        <p><strong>Phone:</strong> +255 712 345 678</p>
+                                        <p><strong>Name:</strong> <span class="review-customer-name"></span></p>
+                                        <p><strong>Email:</strong> <span class="review-customer-email"></span></p>
+                                        <p><strong>Phone:</strong> <span class="review-customer-phone"></span></p>
                                     </div>
                                 </div>
                                 <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                                     <h3 class="font-bold text-gray-800 dark:text-gray-100 mb-3">Shipping Information</h3>
                                     <div class="space-y-2 text-sm">
-                                        <p><strong>Address:</strong> 123 Main Street, Mikocheni</p>
-                                        <p><strong>City:</strong> Dar es Salaam</p>
-                                        <p><strong>Method:</strong> Standard Delivery</p>
+                                        <p><strong>Address:</strong> <span class="review-shipping-address"></span></p>
+                                        <p><strong>City:</strong> <span class="review-shipping-city"></span></p>
+                                        <p><strong>Method:</strong> <span class="review-shipping-method"></span></p>
                                     </div>
                                 </div>
                             </div>
@@ -583,27 +604,35 @@
                                 <div class="space-y-2 text-sm">
                                     <div class="flex justify-between">
                                         <span>Subtotal:</span>
-                                        <span>TZS 2,620,000</span>
+                                        <span>TZS {{ number_format($subtotal) }}</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span>Shipping:</span>
-                                        <span>TZS 10,000</span>
+                                        <span class="review-shipping-fee">TZS {{ number_format($shippingFee) }}</span>
                                     </div>
                                     <div class="flex justify-between">
-                                        <span>Tax:</span>
-                                        <span>TZS 0</span>
+                                        <span>Tax (18%):</span>
+                                        <span>TZS {{ number_format($taxAmount) }}</span>
                                     </div>
                                     <div class="flex justify-between border-t border-gray-200 dark:border-gray-600 pt-2 font-bold">
                                         <span>Total:</span>
-                                        <span class="text-green-600 dark:text-green-400">TZS 2,630,000</span>
+                                        <span class="text-green-600 dark:text-green-400 review-total-amount">TZS {{ number_format($totalAmount) }}</span>
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                                <h3 class="font-bold text-gray-800 dark:text-gray-100 mb-3">Payment Method</h3>
+                                <div class="space-y-2 text-sm">
+                                    <p><strong>Selected Method:</strong> <span class="review-payment-method">Cash on Delivery</span></p>
                                 </div>
                             </div>
 
                             <!-- Terms Agreement -->
                             <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
                                 <label class="flex items-start space-x-3">
-                                    <input type="checkbox" class="mt-1 text-green-600 focus:ring-green-500" required>
+                                    <input type="checkbox" id="terms-agreement" class="mt-1 text-green-600 focus:ring-green-500" required>
                                     <div>
                                         <p class="font-medium text-gray-800 dark:text-gray-100">I agree to the Terms & Conditions</p>
                                         <p class="text-sm text-gray-600 dark:text-gray-400">By checking this box, I confirm that I have read and agree to the terms of service, privacy policy, and return policy.</p>
@@ -630,25 +659,41 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-4">Order Summary</h2>
                     
-                    <div class="space-y-3 mb-4">
+                    <div class="space-y-3 mb-4 max-h-60 overflow-y-auto">
+                        @foreach($cartItems as $item)
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <img src="{{ ($item['image'] ?? false) ? asset('storage/' . $item['image']) : 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=60' }}" 
+                                     alt="{{ $item['name'] ?? 'Product' }}" class="w-12 h-12 object-cover rounded-lg">
+                                <div>
+                                    <p class="font-medium text-gray-800 dark:text-gray-100 text-sm">{{ Str::limit($item['name'] ?? 'Product', 30) }}</p>
+                                    <p class="text-gray-600 dark:text-gray-400 text-xs">Qty: {{ $item['quantity'] ?? 0 }}</p>
+                                </div>
+                            </div>
+                            <p class="text-green-600 dark:text-green-400 font-semibold">TZS {{ number_format(($item['price'] ?? 0) * ($item['quantity'] ?? 0)) }}</p>
+                        </div>
+                        @endforeach
+                    </div>
+                    
+                    <div class="space-y-2 mb-4">
                         <div class="flex justify-between text-sm">
-                            <span class="text-gray-600 dark:text-gray-400">Items (3):</span>
-                            <span>TZS 2,620,000</span>
+                            <span class="text-gray-600 dark:text-gray-400">Items ({{ count($cartItems) }}):</span>
+                            <span>TZS {{ number_format($subtotal) }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600 dark:text-gray-400">Shipping:</span>
-                            <span>TZS 10,000</span>
+                            <span class="summary-shipping-fee">TZS {{ number_format($shippingFee) }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
-                            <span class="text-gray-600 dark:text-gray-400">Tax:</span>
-                            <span>TZS 0</span>
+                            <span class="text-gray-600 dark:text-gray-400">Tax (18%):</span>
+                            <span>TZS {{ number_format($taxAmount) }}</span>
                         </div>
                     </div>
                     
                     <div class="border-t border-gray-200 dark:border-gray-600 pt-3">
                         <div class="flex justify-between items-center font-bold">
                             <span class="text-gray-800 dark:text-gray-100">Total:</span>
-                            <span class="text-green-600 dark:text-green-400 text-lg">TZS 2,630,000</span>
+                            <span class="text-green-600 dark:text-green-400 text-lg summary-total-amount">TZS {{ number_format($totalAmount) }}</span>
                         </div>
                     </div>
                 </div>
@@ -687,6 +732,13 @@
     </div>
 
     <script>
+        // === GLOBAL VARIABLES ===
+        const subtotal = {{ $subtotal }};
+        const baseShippingFee = {{ $shippingFee }};
+        const taxAmount = {{ $taxAmount }};
+        let currentShippingFee = baseShippingFee;
+        let currentTotalAmount = {{ $totalAmount }};
+
         // === DARK MODE TOGGLE ===
         const themeToggle = document.getElementById('themeToggle');
         const html = document.documentElement;
@@ -719,6 +771,38 @@
                 dropdown.classList.remove('active');
             }
         });
+
+        // === DYNAMIC SHIPPING CALCULATION ===
+        function updateShippingFee(shippingMethod) {
+            currentShippingFee = baseShippingFee;
+            
+            if (shippingMethod === 'express') {
+                currentShippingFee += 15000;
+            }
+            
+            const newTaxAmount = subtotal * 0.18;
+            currentTotalAmount = subtotal + currentShippingFee + newTaxAmount;
+            
+            // Update shipping fee displays
+            document.querySelectorAll('.summary-shipping-fee').forEach(el => {
+                el.textContent = `TZS ${currentShippingFee.toLocaleString()}`;
+            });
+            
+            document.querySelectorAll('.review-shipping-fee').forEach(el => {
+                el.textContent = `TZS ${currentShippingFee.toLocaleString()}`;
+            });
+            
+            // Update total amount displays
+            document.querySelectorAll('.summary-total-amount').forEach(el => {
+                el.textContent = `TZS ${Math.round(currentTotalAmount).toLocaleString()}`;
+            });
+            
+            document.querySelectorAll('.review-total-amount').forEach(el => {
+                el.textContent = `TZS ${Math.round(currentTotalAmount).toLocaleString()}`;
+            });
+            
+            return { shippingFee: currentShippingFee, totalAmount: currentTotalAmount };
+        }
 
         // === TAB FUNCTIONALITY ===
         document.addEventListener('DOMContentLoaded', function() {
@@ -807,8 +891,19 @@
                 });
             });
 
+            // Shipping method selection
+            const shippingOptions = document.querySelectorAll('input[name="shipping_method"]');
+            shippingOptions.forEach(option => {
+                option.addEventListener('change', function() {
+                    updateShippingFee(this.value);
+                });
+            });
+
             // Auto-select first payment option
             paymentOptions[4].click(); // Select Cash on Delivery by default
+
+            // Initialize shipping fee
+            updateShippingFee('standard');
         });
 
         function updatePaymentInstructions(method) {
@@ -819,23 +914,23 @@
             switch(method) {
                 case 'mpesa':
                     title = 'M-Pesa Instructions';
-                    message = 'You will receive an M-Pesa prompt on your phone. Enter your PIN to complete the payment of TZS 2,630,000.';
+                    message = 'You will receive an M-Pesa prompt on your phone. Enter your PIN to complete the payment of TZS ' + currentTotalAmount.toLocaleString() + '.';
                     break;
                 case 'tigopesa':
                     title = 'Tigo Pesa Instructions';
-                    message = 'You will receive a Tigo Pesa prompt on your phone. Enter your PIN to complete the payment of TZS 2,630,000.';
+                    message = 'You will receive a Tigo Pesa prompt on your phone. Enter your PIN to complete the payment of TZS ' + currentTotalAmount.toLocaleString() + '.';
                     break;
                 case 'airtel':
                     title = 'Airtel Money Instructions';
-                    message = 'You will receive an Airtel Money prompt on your phone. Enter your PIN to complete the payment of TZS 2,630,000.';
+                    message = 'You will receive an Airtel Money prompt on your phone. Enter your PIN to complete the payment of TZS ' + currentTotalAmount.toLocaleString() + '.';
                     break;
                 case 'card':
                     title = 'Card Payment Instructions';
                     message = 'You will be redirected to our secure payment gateway to enter your card details.';
                     break;
-                case 'cash':
+                case 'cash_on_delivery':
                     title = 'Cash on Delivery Instructions';
-                    message = 'You will pay TZS 2,630,000 when you receive your order. Our delivery agent will collect the payment in cash.';
+                    message = 'You will pay TZS ' + currentTotalAmount.toLocaleString() + ' when you receive your order. Our delivery agent will collect the payment in cash.';
                     break;
             }
 
@@ -847,18 +942,25 @@
 
         // Validation functions
         function validateCustomerDetails() {
-            const firstName = document.querySelector('#customer-tab input[placeholder="Enter first name"]');
-            const lastName = document.querySelector('#customer-tab input[placeholder="Enter last name"]');
-            const email = document.querySelector('#customer-tab input[placeholder="your@email.com"]');
-            const phone = document.querySelector('#customer-tab input[placeholder="+255 XXX XXX XXX"]');
+            const firstName = document.querySelector('input[name="first_name"]');
+            const lastName = document.querySelector('input[name="last_name"]');
+            const email = document.querySelector('input[name="email"]');
+            const phone = document.querySelector('input[name="phone"]');
 
             if (!firstName.value || !lastName.value || !email.value || !phone.value) {
-                alert('Please fill in all required fields before proceeding.');
+                showAlert('Tafadhali jaza sehemu zote zilizo na alama ya nyota (*) kabla ya kuendelea.', 'error');
                 return;
             }
 
             if (!email.value.includes('@')) {
-                alert('Please enter a valid email address.');
+                showAlert('Tafadhali weka anwani halali ya barua pepe.', 'error');
+                return;
+            }
+
+            // Validate phone number format (Tanzanian)
+            const phoneRegex = /^(\+255|255|0)[0-9]{9}$/;
+            if (!phoneRegex.test(phone.value.replace(/\s/g, ''))) {
+                showAlert('Tafadhali weka namba halali ya simu ya Tanzania.', 'error');
                 return;
             }
 
@@ -866,12 +968,13 @@
         }
 
         function validateShippingDetails() {
-            const region = document.querySelector('#shipping-tab select');
-            const city = document.querySelector('#shipping-tab input[placeholder="Enter your city"]');
-            const address = document.querySelector('#shipping-tab input[placeholder="Enter your street address"]');
+            const region = document.querySelector('select[name="shipping_region"]');
+            const city = document.querySelector('input[name="shipping_city"]');
+            const address = document.querySelector('input[name="shipping_address"]');
+            const shippingMethod = document.querySelector('input[name="shipping_method"]:checked');
 
-            if (!region.value || !city.value || !address.value) {
-                alert('Please fill in all shipping information before proceeding.');
+            if (!region.value || !city.value || !address.value || !shippingMethod) {
+                showAlert('Tafadhali jaza taarifa zote za usafirishaji kabla ya kuendelea.', 'error');
                 return;
             }
 
@@ -879,14 +982,71 @@
         }
 
         function validatePaymentDetails() {
-            const paymentSelected = document.querySelector('#payment-tab input[type="radio"]:checked');
+            const paymentSelected = document.querySelector('input[name="payment_method"]:checked');
             
             if (!paymentSelected) {
-                alert('Please select a payment method before proceeding.');
+                showAlert('Tafadhali chagua njia ya malipo kabla ya kuendelea.', 'error');
                 return;
             }
 
+            // Update order summary with final amounts
+            updateOrderSummary();
+
             switchTab('review-tab');
+        }
+
+        // Update order summary in review tab
+        function updateOrderSummary() {
+            const shippingMethod = document.querySelector('input[name="shipping_method"]:checked');
+            const { totalAmount } = updateShippingFee(shippingMethod ? shippingMethod.value : 'standard');
+            
+            // Update customer info in review
+            const firstName = document.querySelector('input[name="first_name"]').value;
+            const lastName = document.querySelector('input[name="last_name"]').value;
+            const email = document.querySelector('input[name="email"]').value;
+            const phone = document.querySelector('input[name="phone"]').value;
+            
+            document.querySelectorAll('.review-customer-name').forEach(el => {
+                el.textContent = firstName + ' ' + lastName;
+            });
+            document.querySelectorAll('.review-customer-email').forEach(el => {
+                el.textContent = email;
+            });
+            document.querySelectorAll('.review-customer-phone').forEach(el => {
+                el.textContent = phone;
+            });
+
+            // Update shipping info in review
+            const region = document.querySelector('select[name="shipping_region"]').value;
+            const city = document.querySelector('input[name="shipping_city"]').value;
+            const address = document.querySelector('input[name="shipping_address"]').value;
+            const shippingMethodText = shippingMethod ? (shippingMethod.value === 'express' ? 'Express Delivery' : 'Standard Delivery') : 'Standard Delivery';
+            
+            document.querySelectorAll('.review-shipping-address').forEach(el => {
+                el.textContent = address;
+            });
+            document.querySelectorAll('.review-shipping-city').forEach(el => {
+                el.textContent = city + ', ' + region;
+            });
+            document.querySelectorAll('.review-shipping-method').forEach(el => {
+                el.textContent = shippingMethodText;
+            });
+
+            // Update payment method in review
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+            let paymentMethodText = 'Cash on Delivery';
+            if (paymentMethod) {
+                switch(paymentMethod.value) {
+                    case 'mpesa': paymentMethodText = 'M-Pesa'; break;
+                    case 'tigopesa': paymentMethodText = 'Tigo Pesa'; break;
+                    case 'airtel': paymentMethodText = 'Airtel Money'; break;
+                    case 'card': paymentMethodText = 'Credit/Debit Card'; break;
+                    case 'cash_on_delivery': paymentMethodText = 'Cash on Delivery'; break;
+                }
+            }
+            document.querySelectorAll('.review-payment-method').forEach(el => {
+                el.textContent = paymentMethodText;
+            });
         }
 
         // Helper function to switch tabs
@@ -924,28 +1084,134 @@
             sessionStorage.setItem('currentTab', tabName);
         }
 
+        // Show custom alert
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'success' ? 'bg-green-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            alertDiv.textContent = message;
+            document.body.appendChild(alertDiv);
+
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Complete order function
         function completeOrder() {
             const completeBtn = document.querySelector('#review-tab button[onclick="completeOrder()"]');
-            const termsCheckbox = document.querySelector('#review-tab input[type="checkbox"]');
+            const termsCheckbox = document.getElementById('terms-agreement');
             
             if (!termsCheckbox.checked) {
-                alert('Please agree to the Terms & Conditions before completing your order.');
+                showAlert('Tafadhali kubali Masharti na Sheria kabla ya kukamilisha agizo lako.', 'error');
                 return;
             }
 
             const originalText = completeBtn.innerHTML;
             
             // Show processing state
-            completeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+            completeBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Inachakata...';
             completeBtn.disabled = true;
 
-            // Simulate order processing
-            setTimeout(() => {
-                alert('Order placed successfully! You will receive a confirmation email shortly.');
-                // Redirect to customer dashboard orders tab
-                window.location.href = 'customer-dashboard.html?tab=orders-tab';
-            }, 2000);
+            // Collect all form data
+            const formData = new FormData();
+            
+            // Customer details
+            formData.append('first_name', document.querySelector('input[name="first_name"]').value);
+            formData.append('last_name', document.querySelector('input[name="last_name"]').value);
+            formData.append('email', document.querySelector('input[name="email"]').value);
+            formData.append('phone', document.querySelector('input[name="phone"]').value);
+            
+            // Shipping details
+            formData.append('shipping_region', document.querySelector('select[name="shipping_region"]').value);
+            formData.append('shipping_city', document.querySelector('input[name="shipping_city"]').value);
+            formData.append('shipping_address', document.querySelector('input[name="shipping_address"]').value);
+            formData.append('shipping_method', document.querySelector('input[name="shipping_method"]:checked').value);
+            
+            // Payment details
+            formData.append('payment_method', document.querySelector('input[name="payment_method"]:checked').value);
+            formData.append('additional_notes', document.querySelector('textarea[name="additional_notes"]').value);
+            formData.append('delivery_instructions', document.querySelector('textarea[name="delivery_instructions"]').value);
+            
+            // Add CSRF token
+            formData.append('_token', '{{ csrf_token() }}');
+
+            // Submit the form via AJAX
+            fetch('{{ route("checkout.process") }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showAlert('Agizo limefanikiwa kuwekwa! ' + data.message, 'success');
+                    // Redirect to confirmation page
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url || '{{ route("customer.orders") }}';
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Hitilafu imetokea. Tafadhali jaribu tena.');
+                }
+            })
+            .catch(error => {
+                showAlert(error.message, 'error');
+                completeBtn.innerHTML = originalText;
+                completeBtn.disabled = false;
+            });
         }
+
+        // Real-time form validation
+        function setupRealTimeValidation() {
+            const inputs = document.querySelectorAll('input[required], select[required]');
+            
+            inputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    validateField(this);
+                });
+            });
+        }
+
+        function validateField(field) {
+            const value = field.value.trim();
+            const fieldName = field.getAttribute('name');
+            
+            if (!value) {
+                field.classList.add('border-red-500');
+                return false;
+            }
+            
+            field.classList.remove('border-red-500');
+            
+            // Specific validations
+            switch(fieldName) {
+                case 'email':
+                    if (!value.includes('@')) {
+                        field.classList.add('border-red-500');
+                        return false;
+                    }
+                    break;
+                case 'phone':
+                    const phoneRegex = /^(\+255|255|0)[0-9]{9}$/;
+                    if (!phoneRegex.test(value.replace(/\s/g, ''))) {
+                        field.classList.add('border-red-500');
+                        return false;
+                    }
+                    break;
+            }
+            
+            return true;
+        }
+
+        // Initialize real-time validation
+        setupRealTimeValidation();
     </script>
 </body>
 </html>

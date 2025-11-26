@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -13,11 +14,6 @@ use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
     /**
      * Show checkout page
      */
@@ -42,13 +38,15 @@ class CheckoutController extends Controller
         $taxAmount = $subtotal * 0.18; // 18% VAT
         $totalAmount = $subtotal + $shippingFee + $taxAmount;
 
-        return view('checkout.index', compact(
-            'cartItems',
-            'subtotal',
-            'shippingFee',
-            'taxAmount',
-            'totalAmount'
-        ));
+        // HAKIKISHA UNATUMA VARIABLE ZOTE
+        return view('products.checkout', [
+            'user' => $user,
+            'cartItems' => $cartItems,
+            'subtotal' => $subtotal,
+            'shippingFee' => $shippingFee, // HII NI MUHIMU!
+            'taxAmount' => $taxAmount,
+            'totalAmount' => $totalAmount
+        ]);
     }
 
     /**
@@ -59,26 +57,35 @@ class CheckoutController extends Controller
         $user = Auth::user();
 
         $validator = Validator::make($request->all(), [
-            'shipping_address_line1' => 'required|string|max:255',
-            'shipping_address_line2' => 'nullable|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'phone' => 'required|string|max:20',
+            'shipping_region' => 'required|string|max:255',
             'shipping_city' => 'required|string|max:255',
-            'shipping_country' => 'required|string|max:255',
-            'shipping_zip_code' => 'required|string|max:20',
-            'payment_method' => 'required|in:cash_on_delivery,mobile_money,card',
+            'shipping_address' => 'required|string|max:255',
+            'shipping_method' => 'required|in:standard,express',
+            'payment_method' => 'required|in:cash_on_delivery,mpesa,tigopesa,airtel,card',
+            'additional_notes' => 'nullable|string',
+            'delivery_instructions' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
+            return response()->json([
+                'success' => false,
+                'message' => 'Tafadhali jaza sehemu zote zinazohitajika.',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         // Get cart items
         $cartItems = $this->getCartItems($user);
         
         if (empty($cartItems)) {
-            return redirect()->route('products.index')
-                ->with('error', 'Cart yako ni tupu. Ongeza bidhaa kwanza.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Cart yako ni tupu. Ongeza bidhaa kwanza.'
+            ], 400);
         }
 
         try {
@@ -90,6 +97,10 @@ class CheckoutController extends Controller
             });
             
             $shippingFee = 15000;
+            if ($request->shipping_method === 'express') {
+                $shippingFee += 15000; // Express shipping extra charge
+            }
+            
             $taxAmount = $subtotal * 0.18;
             $totalAmount = $subtotal + $shippingFee + $taxAmount;
 
@@ -99,13 +110,20 @@ class CheckoutController extends Controller
                 'order_number' => 'ORD-' . Str::upper(Str::random(10)),
                 'status' => 'pending',
                 'total_amount' => $totalAmount,
+                'subtotal_amount' => $subtotal,
                 'shipping_fee' => $shippingFee,
                 'tax_amount' => $taxAmount,
-                'shipping_address_line1' => $request->shipping_address_line1,
-                'shipping_address_line2' => $request->shipping_address_line2,
+                'customer_first_name' => $request->first_name,
+                'customer_last_name' => $request->last_name,
+                'customer_email' => $request->email,
+                'customer_phone' => $request->phone,
+                'shipping_region' => $request->shipping_region,
                 'shipping_city' => $request->shipping_city,
-                'shipping_country' => $request->shipping_country,
-                'shipping_zip_code' => $request->shipping_zip_code,
+                'shipping_address' => $request->shipping_address,
+                'shipping_method' => $request->shipping_method,
+                'payment_method' => $request->payment_method,
+                'additional_notes' => $request->additional_notes,
+                'delivery_instructions' => $request->delivery_instructions,
             ]);
 
             // Create order items
@@ -114,12 +132,16 @@ class CheckoutController extends Controller
                     'order_id' => $order->id,
                     'product_id' => $item['id'],
                     'quantity' => $item['quantity'],
-                    'price' => $item['price'],
+                    'unit_price' => $item['price'],
+                    'total_price' => $item['price'] * $item['quantity'],
                 ]);
 
                 // Update product quantity
                 $product = Product::find($item['id']);
                 if ($product) {
+                    if ($product->quantity < $item['quantity']) {
+                        throw new \Exception('Bidhaa ' . $product->name . ' haitoshi kwenye hisa.');
+                    }
                     $product->decrement('quantity', $item['quantity']);
                 }
             }
@@ -137,14 +159,20 @@ class CheckoutController extends Controller
 
             DB::commit();
 
-            return redirect()->route('customer.orders')
-                ->with('success', 'Umefanikiwa kuweka agizo! Namba yako ya agizo ni: ' . $order->order_number);
+            return response()->json([
+                'success' => true,
+                'message' => 'Umefanikiwa kuweka agizo! Namba yako ya agizo ni: ' . $order->order_number,
+                'order_number' => $order->order_number,
+                'redirect_url' => route('customer.orders')
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'Imeshindikana kuweka agizo. Tafadhali jaribu tena.')
-                ->withInput();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Imeshindikana kuweka agizo: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -157,7 +185,7 @@ class CheckoutController extends Controller
         $cartItems = session()->get('buyo_cart', []);
 
         // If session is empty, try to get from database
-        if (empty($cartItems)) {
+        if (empty($cartItems) && $user) {
             $dbCartItems = Cart::where('user_id', $user->id)
                 ->with('product')
                 ->get()
@@ -165,8 +193,9 @@ class CheckoutController extends Controller
                     return [
                         'id' => $cartItem->product_id,
                         'name' => $cartItem->product->name,
-                        'price' => $cartItem->price,
+                        'price' => $cartItem->product->price,
                         'quantity' => $cartItem->quantity,
+                        'image' => $cartItem->product->images->first()->image_path ?? null,
                     ];
                 })
                 ->toArray();
@@ -186,7 +215,9 @@ class CheckoutController extends Controller
         session()->forget('buyo_cart');
 
         // Clear database cart
-        Cart::where('user_id', $user->id)->delete();
+        if ($user) {
+            Cart::where('user_id', $user->id)->delete();
+        }
     }
 
     /**
@@ -197,7 +228,7 @@ class CheckoutController extends Controller
         $user = Auth::user();
         
         $order = Order::where('user_id', $user->id)
-            ->with(['items.product.seller', 'user'])
+            ->with(['items.product', 'user'])
             ->findOrFail($orderId);
 
         return view('checkout.confirmation', compact('order'));

@@ -63,12 +63,12 @@ class ProductController extends Controller
 
     public function index(Request $request) 
     {
-        // Query products with relationships - FIXED: Removed brand references
+        // Query products with relationships
         $query = Product::with(['seller', 'category', 'productImages'])
             ->where('status', 'active')
             ->where('is_approved', true);
 
-        // Search functionality - FIXED: Removed brand search
+        // Search functionality
         if ($request->has('search') && $request->search) {
             $searchTerm = $request->search;
             $query->where(function($q) use ($searchTerm) {
@@ -92,7 +92,7 @@ class ProductController extends Controller
             $query->whereIn('category_id', $categoryIds);
         }
 
-        // Filter by seller - FIXED: Using correct relationship
+        // Filter by seller
         if ($request->has('seller') && $request->seller) {
             $query->whereHas('seller', function($q) use ($request) {
                 $q->where('store_name', 'like', '%' . $request->seller . '%');
@@ -107,7 +107,7 @@ class ProductController extends Controller
             $query->where('price', '<=', floatval($request->max_price));
         }
 
-        // Region filter - FIXED: Using business_place from sellers table
+        // Region filter
         if ($request->has('region') && $request->region) {
             $query->whereHas('seller', function($q) use ($request) {
                 $q->where('business_place', 'like', '%' . $request->region . '%')
@@ -115,12 +115,12 @@ class ProductController extends Controller
             });
         }
 
-        // Condition filter - FIXED: Using condition from products table
+        // Condition filter
         if ($request->has('condition') && $request->condition) {
             $query->where('condition', $request->condition);
         }
 
-        // Location filter - FIXED: Using location from products table
+        // Location filter
         if ($request->has('location') && $request->location) {
             $query->where('location', 'like', '%' . $request->location . '%');
         }
@@ -152,7 +152,7 @@ class ProductController extends Controller
 
         $products = $query->paginate(12);
         
-        // Fetch all data from database - FIXED: Using correct relationships
+        // Fetch all data from database
         $categories = Category::where('is_active', true)
             ->withCount(['products' => function($query) {
                 $query->where('status', 'active')->where('is_approved', true);
@@ -160,16 +160,16 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
         
-        // Get conditions from products table - FIXED: Removed brand
-        $conditions = ['new', 'used', 'refurbished']; // Static since it's enum in database
+        // Get conditions from products table
+        $conditions = ['new', 'used', 'refurbished'];
 
-        // Get regions from database - FIXED: Using regions table
+        // Get regions from database
         $regions = Region::where('is_active', true)
             ->orderBy('name')
             ->pluck('name')
             ->toArray();
 
-        // Get recent sellers with product count - FIXED: Correct relationship
+        // Get recent sellers with product count
         $recentSellers = Seller::withCount(['products' => function($query) {
                 $query->where('status', 'active')->where('is_approved', true);
             }])
@@ -197,7 +197,7 @@ class ProductController extends Controller
         ));
     }
 
-    // AJAX FILTER METHOD - FIXED: Removed brand references
+    // AJAX FILTER METHOD
     public function filter(Request $request)
     {
         try {
@@ -221,8 +221,6 @@ class ProductController extends Controller
                 $query->where('price', '<=', floatval($request->max_price));
             }
 
-            // FIXED: Removed brand filter
-
             if ($request->has('region') && $request->region != '') {
                 $query->whereHas('seller', function($q) use ($request) {
                     $q->where('business_place', 'like', '%' . $request->region . '%')
@@ -243,10 +241,14 @@ class ProductController extends Controller
             // Default ordering
             $query->orderBy('created_at', 'desc');
 
-            $products = $query->get();
+            $page = $request->get('page', 1);
+            $perPage = 12;
+            
+            $paginatedProducts = $query->paginate($perPage, ['*'], 'page', $page);
+            $hasMore = $paginatedProducts->hasMorePages();
 
             // Format products for JSON response
-            $formattedProducts = $products->map(function($product) {
+            $formattedProducts = $paginatedProducts->map(function($product) {
                 return [
                     'id' => $product->id,
                     'name' => $product->name,
@@ -255,24 +257,32 @@ class ProductController extends Controller
                     'description' => $product->description,
                     'seller_store_name' => $product->seller->store_name ?? null,
                     'seller_business_place' => $product->seller->business_place ?? null,
+                    'seller_id' => $product->seller_id,
                     'product_images' => $product->productImages->map(function($image) {
                         return [
                             'image_path' => $image->image_path,
                             'id' => $image->id
                         ];
                     }),
-                    'view_count' => $product->view_count
+                    'view_count' => $product->view_count,
+                    'condition' => $product->condition,
+                    'location' => $product->location,
+                    'created_at' => $product->created_at->format('Y-m-d H:i:s'),
+                    'updated_at' => $product->updated_at->format('Y-m-d H:i:s')
                 ];
             });
 
             return response()->json([
                 'success' => true,
                 'products' => $formattedProducts,
-                'message' => 'Products filtered successfully',
-                'count' => $products->count()
+                'hasMore' => $hasMore,
+                'current_page' => $page,
+                'total' => $paginatedProducts->total(),
+                'message' => 'Products filtered successfully'
             ]);
 
         } catch (\Exception $e) {
+            \Log::error('Product filter error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error filtering products: ' . $e->getMessage()
@@ -478,7 +488,7 @@ class ProductController extends Controller
             ->firstOrFail();
 
         $products = Product::with(['category', 'productImages'])
-            ->where('seller_id', $seller->user_id)
+            ->where('seller_id', $seller->id)
             ->where('status', 'active')
             ->where('is_approved', true)
             ->orderBy('created_at', 'desc')
@@ -516,6 +526,49 @@ class ProductController extends Controller
         return view('products.new-arrivals', compact('products', 'categories'));
     }
 
+    // Live search for products
+    public function liveSearch(Request $request)
+    {
+        try {
+            $query = $request->get('query');
+            
+            if (!$query || strlen($query) < 2) {
+                return response()->json([]);
+            }
+
+            $products = Product::with(['category', 'productImages'])
+                ->where('status', 'active')
+                ->where('is_approved', true)
+                ->where(function($q) use ($query) {
+                    $q->where('name', 'like', '%' . $query . '%')
+                      ->orWhere('description', 'like', '%' . $query . '%')
+                      ->orWhere('name_sw', 'like', '%' . $query . '%')
+                      ->orWhere('sku', 'like', '%' . $query . '%');
+                })
+                ->orderBy('name')
+                ->limit(10)
+                ->get()
+                ->map(function($product) {
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'price' => $product->price,
+                        'image' => $product->productImages->first() ? 
+                                 asset('storage/' . $product->productImages->first()->image_path) : 
+                                 asset('images/default-product.jpg'),
+                        'category' => $product->category->name,
+                        'slug' => $product->slug
+                    ];
+                });
+
+            return response()->json($products);
+
+        } catch (\Exception $e) {
+            \Log::error('Live search error: ' . $e->getMessage());
+            return response()->json([]);
+        }
+    }
+
     // API methods
     public function getFeaturedProducts()
     {
@@ -539,5 +592,54 @@ class ProductController extends Controller
             ->get();
 
         return response()->json($categories);
+    }
+
+    // Get products by multiple categories
+    public function getProductsByCategories(Request $request)
+    {
+        try {
+            $categoryIds = $request->get('category_ids', []);
+            
+            if (empty($categoryIds)) {
+                return response()->json([]);
+            }
+
+            $products = Product::with(['seller', 'category', 'productImages'])
+                ->where('status', 'active')
+                ->where('is_approved', true)
+                ->whereIn('category_id', $categoryIds)
+                ->orderBy('created_at', 'desc')
+                ->limit(20)
+                ->get();
+
+            return response()->json($products);
+
+        } catch (\Exception $e) {
+            \Log::error('Get products by categories error: ' . $e->getMessage());
+            return response()->json([], 500);
+        }
+    }
+
+    // Get similar products
+    public function getSimilarProducts($productId)
+    {
+        try {
+            $product = Product::findOrFail($productId);
+            
+            $similarProducts = Product::with(['seller', 'category', 'productImages'])
+                ->where('category_id', $product->category_id)
+                ->where('id', '!=', $product->id)
+                ->where('status', 'active')
+                ->where('is_approved', true)
+                ->inRandomOrder()
+                ->limit(8)
+                ->get();
+
+            return response()->json($similarProducts);
+
+        } catch (\Exception $e) {
+            \Log::error('Get similar products error: ' . $e->getMessage());
+            return response()->json([]);
+        }
     }
 }

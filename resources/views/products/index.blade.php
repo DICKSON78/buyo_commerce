@@ -668,6 +668,41 @@
     .contact-modal.active .contact-modal-content {
         transform: scale(1);
     }
+
+    /* Message Seller Button Styles */
+    .message-seller-btn {
+        background: linear-gradient(135deg, #3B82F6, #1D4ED8);
+        color: white;
+        border: none;
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .message-seller-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        background: linear-gradient(135deg, #2563EB, #1E40AF);
+    }
+
+    .message-seller-btn:active {
+        transform: translateY(0);
+    }
+
+    .dark .message-seller-btn {
+        background: linear-gradient(135deg, #1E40AF, #1E3A8A);
+    }
+
+    .dark .message-seller-btn:hover {
+        background: linear-gradient(135deg, #1D4ED8, #1E3A8A);
+    }
 </style>
 
 <!-- Top Navigation Bar -->
@@ -719,13 +754,22 @@
                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm">
                             </div>
 
-                            <!-- Region Filter -->
+                                <!-- Region Filter -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Region</label>
-                                <select name="region" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 text-sm bg-white dark:bg-gray-700">
+                                <label for="region" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Region
+                                </label>
+                                <select
+                                    id="region"
+                                    name="region"
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm bg-white dark:bg-gray-700 transition-colors duration-200"
+                                >
                                     <option value="">All Regions</option>
                                     @foreach($regions as $region)
-                                        <option value="{{ $region }}" {{ request('region') == $region ? 'selected' : '' }}>{{ $region }}</option>
+                                        <option value="{{ $region }}"
+                                            {{ request('region') == $region ? 'selected' : '' }}>
+                                            {{ $region }}
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
@@ -776,7 +820,7 @@
             <div class="hidden lg:flex items-center space-x-4">
                 <!-- Messages Icon -->
                 @auth
-                <a href="{{ route('messages.index') }}" class="text-white hover:text-yellow-300 transition-colors relative" title="Messages">
+                <a href="{{ route('seller.dashboard') }}" class="text-white hover:text-yellow-300 transition-colors relative" title="Messages">
                     <i class="fas fa-envelope text-lg"></i>
                     <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold message-count">0</span>
                 </a>
@@ -797,9 +841,9 @@
                     @endphp
 
                     @if($isSeller)
-                        <a href="{{ route('seller.products.create') }}" class="bg-yellow-500 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 dark:hover:bg-yellow-500 transition-colors flex items-center space-x-2 shadow-lg">
+                        <a href="{{ route('seller.dashboard') }}" class="bg-yellow-500 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 dark:hover:bg-yellow-500 transition-colors flex items-center space-x-2 shadow-lg">
                             <i class="fas fa-plus"></i>
-                            <span>Sell Product</span>
+                            <span>Post Product</span>
                         </a>
                     @else
                         <a href="{{ route('register.seller') }}" class="bg-yellow-500 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 dark:hover:bg-yellow-500 transition-colors flex items-center space-x-2 shadow-lg">
@@ -861,12 +905,10 @@
                         </div>
                     </div>
                 @else
-                    <!-- Not logged in -->
-                    <a href="{{ route('login.customer') }}" class="text-white hover:text-yellow-300 transition-colors font-semibold">
-                        Login
-                    </a>
-                    <a href="{{ route('register.customer') }}" class="bg-yellow-500 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 dark:hover:bg-yellow-500 transition-colors shadow-lg">
-                        Register
+                    <!-- Not logged in - Show ONLY Become Seller button -->
+                    <a href="{{ route('register.seller') }}" class="bg-yellow-500 dark:bg-yellow-600 text-gray-900 dark:text-gray-100 px-4 py-2 rounded-lg font-semibold hover:bg-yellow-400 dark:hover:bg-yellow-500 transition-colors flex items-center space-x-2 shadow-lg">
+                        <i class="fas fa-store"></i>
+                        <span>Become Seller</span>
                     </a>
                 @endauth
             </div>
@@ -997,7 +1039,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const categoriesParam = urlParams.get('categories');
         selectedCategories = categoriesParam ? categoriesParam.split(',') : [];
-        
+
         updateCategoryUI();
         updateFilterTagsDisplay();
     }
@@ -1011,7 +1053,7 @@
 
         updateCategoryUI();
         updateFilterTagsDisplay();
-        
+
         loadProductsByCategories();
     }
 
@@ -1093,13 +1135,13 @@
     // === AJAX PRODUCT LOADING ===
     function loadProductsByCategories() {
         if (isLoading) return;
-        
+
         isLoading = true;
         currentPage = 1;
         hasMore = true;
-        
+
         showLoading(true);
-        
+
         const formData = new FormData();
         if (selectedCategories.length > 0) {
             formData.append('categories', selectedCategories.join(','));
@@ -1134,7 +1176,7 @@
 
     function loadMoreProducts() {
         if (isLoading || !hasMore) return;
-        
+
         isLoading = true;
         showLoading(true);
 
@@ -1176,7 +1218,7 @@
         if (products.length === 0) {
             productFeed.innerHTML = `
                 <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-12 text-center">
-                    <div class="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <div class="w-24 h-24 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2">
                         <i class="fas fa-search text-gray-400 text-3xl"></i>
                     </div>
                     <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-3">No products found</h3>
@@ -1208,10 +1250,10 @@
     }
 
     function generateProductHtml(product) {
-        const mainImage = product.product_images && product.product_images.length > 0 
-            ? '{{ asset("storage/") }}/' + product.product_images[0].image_path 
+        const mainImage = product.product_images && product.product_images.length > 0
+            ? '{{ asset("storage/") }}/' + product.product_images[0].image_path
             : 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=500';
-        
+
         return `
             <div class="product-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden product-slide-in">
                 <!-- Seller Header -->
@@ -1240,9 +1282,9 @@
 
                 <!-- Product Image -->
                 <div class="relative">
-                    <img src="${mainImage}" alt="${product.name}" 
+                    <img src="${mainImage}" alt="${product.name}"
                          class="w-full h-80 object-cover product-image">
-                    
+
                     ${product.compare_price && product.compare_price > product.price ? `
                         <div class="sale-badge absolute top-4 right-4">
                             <i class="fas fa-tag mr-1"></i>
@@ -1274,6 +1316,13 @@
                             <i class="fas fa-shopping-cart text-lg"></i>
                             <span class="text-base">Add to Cart</span>
                         </button>
+
+                        <!-- Message Seller Button -->
+                        <button onclick="messageSeller(${product.id}, '${product.seller_store_name || 'Seller'}', ${product.seller_id || '0'})"
+                                class="message-seller-btn">
+                            <i class="fas fa-comment-dots"></i>
+                            <span>Message Seller</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1283,7 +1332,7 @@
     // === ENHANCED CART MANAGEMENT ===
     function updateCartDisplay() {
         const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-        
+
         document.querySelectorAll('.cart-count').forEach(el => {
             el.textContent = totalItems;
             el.style.display = totalItems > 0 ? 'flex' : 'none';
@@ -1354,53 +1403,28 @@
     }
 
     function addToCart(productId, productName, productPrice) {
-        fetch('{{ route("api.user.status") }}')
-            .then(response => response.json())
-            .then(data => {
-                if (!data.is_logged_in) {
-                    fetch('{{ route("store.intended.url") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({
-                            intended_url: window.location.href
-                        })
-                    })
-                    .then(() => {
-                        showNotification('Tafadhali jisajili kwanza ili uweze kununua bidhaa', 'error');
-                        window.location.href = '{{ route("register.customer") }}';
-                    });
-                    return;
-                }
+        // Guest users can add to cart without authentication
+        const existingItem = cartItems.find(item => item.id === productId);
 
-                const existingItem = cartItems.find(item => item.id === productId);
-
-                if (existingItem) {
-                    existingItem.quantity += 1;
-                } else {
-                    cartItems.push({
-                        id: productId,
-                        name: productName,
-                        price: productPrice,
-                        quantity: 1
-                    });
-                }
-
-                localStorage.setItem('buyo_cart', JSON.stringify(cartItems));
-                updateCartDisplay();
-
-                showNotification(`${productName} added to cart!`, 'success');
-
-                if (window.innerWidth < 1024) {
-                    openCart();
-                }
-            })
-            .catch(error => {
-                console.error('Error checking user status:', error);
-                showNotification('Hitilafu imetokea. Tafadhali jaribu tena.', 'error');
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            cartItems.push({
+                id: productId,
+                name: productName,
+                price: productPrice,
+                quantity: 1
             });
+        }
+
+        localStorage.setItem('buyo_cart', JSON.stringify(cartItems));
+        updateCartDisplay();
+
+        showNotification(`${productName} added to cart!`, 'success');
+
+        if (window.innerWidth < 1024) {
+            openCart();
+        }
     }
 
     function updateCartItemQuantity(productId, change) {
@@ -1433,6 +1457,137 @@
         document.getElementById('desktopCartOverlay').classList.remove('active');
         document.getElementById('mobileCartOverlay').classList.remove('active');
         document.body.style.overflow = 'auto';
+    }
+
+    function proceedToCheckout() {
+        // Check if user is logged in
+        fetch('{{ route("api.user.status") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.is_logged_in) {
+                    // Store intended URL and redirect to checkout/registration page
+                    fetch('{{ route("store.intended.url") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            intended_url: window.location.href,
+                            action: 'checkout'
+                        })
+                    })
+                    .then(() => {
+                        // Redirect to checkout page where user can register
+                        window.location.href = '{{ route("customer.checkout") }}';
+                    });
+                    return;
+                }
+
+                // User is logged in, proceed with checkout
+                window.location.href = '{{ route("customer.checkout") }}';
+            })
+            .catch(error => {
+                console.error('Error checking user status:', error);
+                showNotification('Hitilafu imetokea. Tafadhali jaribu tena.', 'error');
+            });
+    }
+
+    // === MESSAGE SELLER FUNCTIONALITY ===
+    function messageSeller(productId, sellerName, sellerId) {
+        // Check if user is logged in
+        fetch('{{ route("api.user.status") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.is_logged_in) {
+                    // Store intended URL and redirect to checkout/registration page
+                    fetch('{{ route("store.intended.url") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({
+                            intended_url: window.location.href,
+                            action: 'message_seller'
+                        })
+                    })
+                    .then(() => {
+                        // Redirect to checkout page where user can register
+                        window.location.href = '{{ route("customer.checkout") }}?action=message&product_id=' + productId;
+                    });
+                    return;
+                }
+
+                // User is logged in, proceed with messaging
+                const productName = document.querySelector(`[data-product-id="${productId}"]`)?.dataset.productName || 'this product';
+
+                // Create a default message
+                const defaultMessage = `Habari, nina hamu ya kujua zaidi kuhusu bidhaa yako "${productName}". Je, ipo available? Na bei ni fixed?`;
+
+                // Open contact modal with pre-filled message
+                openContactModal(productId, sellerName, sellerId, defaultMessage);
+            })
+            .catch(error => {
+                console.error('Error checking user status:', error);
+                showNotification('Hitilafu imetokea. Tafadhali jaribu tena.', 'error');
+            });
+    }
+
+    function openContactModal(productId, sellerName, sellerId, defaultMessage = '') {
+        document.getElementById('sellerName').textContent = sellerName;
+        document.getElementById('productId').value = productId;
+        document.getElementById('sellerId').value = sellerId;
+        document.getElementById('message').value = defaultMessage;
+
+        const modal = document.getElementById('contactSellerModal');
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeContactModal() {
+        const modal = document.getElementById('contactSellerModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    function sendMessageToSeller(event) {
+        event.preventDefault();
+
+        const formData = new FormData(event.target);
+        const productId = formData.get('product_id');
+        const sellerId = formData.get('seller_id');
+        const message = formData.get('message');
+
+        // Send message via AJAX
+        fetch('{{ route("customer.api.messages.send") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                product_id: productId,
+                seller_id: sellerId,
+                message: message
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Ujumbe umetumwa kikamilifu kwa muuzaji!', 'success');
+                closeContactModal();
+
+                // Clear form
+                event.target.reset();
+            } else {
+                showNotification(data.message || 'Hitilafu imetokea. Tafadhali jaribu tena.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error sending message:', error);
+            showNotification('Hitilafu imetokea. Tafadhali jaribu tena.', 'error');
+        });
     }
 
     function openShareSheet(productId, productName, productImage) {
@@ -1502,10 +1657,6 @@
         setTimeout(() => {
             notification.remove();
         }, 3000);
-    }
-
-    function proceedToCheckout() {
-        showNotification('Proceeding to checkout...', 'success');
     }
 
     function scrollToTop() {
@@ -1713,6 +1864,11 @@
                 closeShareSheet();
             }
 
+            const contactModal = document.getElementById('contactSellerModal');
+            if (contactModal && e.target === contactModal) {
+                closeContactModal();
+            }
+
             const advancedFilters = document.getElementById('advancedFilters');
             if (advancedFilters && !advancedFilters.contains(e.target) && !e.target.closest('form')) {
                 advancedFilters.classList.add('hidden');
@@ -1893,7 +2049,7 @@
         <div class="category-scroll-container relative">
             <div class="categories-scroll">
                 @foreach($categories as $category)
-                <button data-category-id="{{ $category->id }}" 
+                <button data-category-id="{{ $category->id }}"
                         onclick="toggleCategory('{{ $category->id }}', '{{ $category->name }}')"
                         class="category-btn flex flex-col items-center cursor-pointer group flex-shrink-0 p-3 rounded-xl bg-white dark:bg-gray-800 hover:shadow-md transition-all duration-300">
                     <div class="relative">
@@ -1963,7 +2119,7 @@
                 </div>
             </div>
         </div>
-     
+
         <!-- Product Feed -->
         <div class="flex-1 min-w-0">
             <div id="productFeed" class="space-y-6 pb-8">

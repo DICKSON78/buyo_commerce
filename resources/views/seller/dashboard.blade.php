@@ -23,6 +23,50 @@
     .nav-scrolled.dark {
         background: rgba(10, 92, 10, 0.95) !important;
     }
+
+    /* Mobile Tabs Styles */
+    .mobile-tab {
+        flex: 1;
+        padding: 12px 8px;
+        text-align: center;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        background: white;
+        color: #6b7280;
+        font-size: 12px;
+        min-width: 80px;
+    }
+
+    .dark .mobile-tab {
+        background: #1f2937;
+        color: #9ca3af;
+    }
+
+    .mobile-tab.active {
+        border-bottom-color: #059669;
+        color: #059669;
+        background: #f0fdf4;
+    }
+
+    .dark .mobile-tab.active {
+        background: #064e3b;
+        color: #34d399;
+    }
+
+    .mobile-tab i {
+        margin-bottom: 4px;
+        font-size: 14px;
+    }
+
+    /* Scrollbar hiding for mobile */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
 </style>
 
 <!-- Top Navigation Bar -->
@@ -298,8 +342,30 @@
         </div>
     @endif
 
-    <!-- Tabs Navigation -->
-    <div class="mb-6">
+    <!-- Mobile Tabs Navigation -->
+    <div class="sm:hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-4 overflow-x-auto scrollbar-hide">
+        <div class="flex">
+            <button class="mobile-tab active flex flex-col items-center justify-center px-4 py-3 min-w-20 text-center" data-tab="overview-section">
+                <i class="fas fa-tachometer-alt text-sm mb-1"></i>
+                <span class="text-xs font-medium">Dashboard</span>
+            </button>
+            <button class="mobile-tab flex flex-col items-center justify-center px-4 py-3 min-w-20 text-center" data-tab="products-section">
+                <i class="fas fa-boxes text-sm mb-1"></i>
+                <span class="text-xs font-medium">Products</span>
+            </button>
+            <button class="mobile-tab flex flex-col items-center justify-center px-4 py-3 min-w-20 text-center" data-tab="orders-section">
+                <i class="fas fa-shopping-cart text-sm mb-1"></i>
+                <span class="text-xs font-medium">Orders</span>
+            </button>
+            <button class="mobile-tab flex flex-col items-center justify-center px-4 py-3 min-w-20 text-center" data-tab="messages-section">
+                <i class="fas fa-comments text-sm mb-1"></i>
+                <span class="text-xs font-medium">Messages</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Desktop Tabs Navigation -->
+    <div class="hidden sm:block mb-6">
         <div class="flex space-x-4 border-b border-gray-200 dark:border-gray-700" role="tablist">
             <button id="overviewTab" class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-t-md focus:outline-none focus:ring-2 focus:ring-green-300 transition-all duration-200" role="tab" aria-selected="true" aria-controls="overview-section">
                 <i class="fas fa-tachometer-alt mr-2"></i> Dashboard
@@ -870,6 +936,86 @@
         }
     });
 
+    // === AUTOMATIC TAB ACTIVATION ===
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tabs automatically - Dashboard will be active by default
+        initializeTabs();
+        
+        // Set up event listeners for both desktop and mobile tabs
+        setupTabEventListeners();
+    });
+
+    function initializeTabs() {
+        // Hide all sections first
+        document.querySelectorAll('.section').forEach(section => {
+            section.classList.remove('active');
+        });
+        
+        // Show overview section by default
+        document.getElementById('overview-section').classList.add('active');
+        
+        // Update desktop tabs - set overview as active
+        document.querySelectorAll('[role="tab"]').forEach(tab => {
+            tab.classList.remove('bg-green-600', 'text-white');
+            tab.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+        });
+        document.getElementById('overviewTab').classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+        document.getElementById('overviewTab').classList.add('bg-green-600', 'text-white');
+        
+        // Update mobile tabs - set overview as active
+        document.querySelectorAll('.mobile-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelector('.mobile-tab[data-tab="overview-section"]').classList.add('active');
+        
+        // Store current tab in session storage
+        sessionStorage.setItem('currentTab', 'overviewTab');
+    }
+
+    function setupTabEventListeners() {
+        // Desktop tabs
+        const desktopTabs = document.querySelectorAll('[role="tab"]');
+        desktopTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                switchToTab(this.id);
+            });
+        });
+        
+        // Mobile tabs
+        const mobileTabs = document.querySelectorAll('.mobile-tab');
+        mobileTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabName = this.getAttribute('data-tab');
+                
+                // Hide all sections
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Show selected section
+                document.getElementById(tabName).classList.add('active');
+                
+                // Update mobile tabs
+                mobileTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update desktop tabs
+                const correspondingDesktopTab = document.getElementById(tabName.replace('-section', 'Tab'));
+                if (correspondingDesktopTab) {
+                    desktopTabs.forEach(t => {
+                        t.classList.remove('bg-green-600', 'text-white');
+                        t.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                    });
+                    correspondingDesktopTab.classList.remove('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+                    correspondingDesktopTab.classList.add('bg-green-600', 'text-white');
+                }
+                
+                // Store current tab
+                sessionStorage.setItem('currentTab', tabName.replace('-section', 'Tab'));
+            });
+        });
+    }
+
     // === TAB SWITCHING FUNCTIONALITY ===
     function switchToTab(tabId) {
         // Hide all sections
@@ -889,6 +1035,11 @@
             tab.classList.add('bg-gray-100', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
         });
         
+        // Update mobile tabs
+        document.querySelectorAll('.mobile-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
         // Activate selected tab
         const activeTab = document.getElementById(tabId);
         if (activeTab) {
@@ -896,23 +1047,15 @@
             activeTab.classList.add('bg-green-600', 'text-white');
         }
         
+        // Activate mobile tab
+        const mobileTab = document.querySelector(`.mobile-tab[data-tab="${tabId.replace('Tab', '-section')}"]`);
+        if (mobileTab) {
+            mobileTab.classList.add('active');
+        }
+        
         // Store current tab in session storage
         sessionStorage.setItem('currentTab', tabId);
     }
-    
-    // Add click event listeners to tabs
-    document.addEventListener('DOMContentLoaded', function() {
-        const tabs = document.querySelectorAll('[role="tab"]');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                switchToTab(this.id);
-            });
-        });
-        
-        // Load saved tab or default to overview
-        const savedTab = sessionStorage.getItem('currentTab') || 'overviewTab';
-        switchToTab(savedTab);
-    });
 
     // === PRODUCT MODAL FUNCTIONS ===
     function openProductModal() {

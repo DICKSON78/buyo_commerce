@@ -91,7 +91,7 @@ class SellerController extends Controller
           ->sum('total_amount') ?? 0;
 
         $revenueGrowth = $previousMonthRevenue > 0 ?
-            (($lastMonthRevenue - $previousMonthRevenue) / $previousMonthRevenue) * 100 : 
+            (($lastMonthRevenue - $previousMonthRevenue) / $previousMonthRevenue) * 100 :
             ($lastMonthRevenue > 0 ? 100 : 0);
 
         $lastMonthOrders = Order::whereHas('items.product', function($query) use ($seller) {
@@ -103,7 +103,7 @@ class SellerController extends Controller
         })->whereBetween('created_at', [Carbon::now()->subMonths(2), Carbon::now()->subMonth()])->count();
 
         $orderGrowth = $previousMonthOrders > 0 ?
-            (($lastMonthOrders - $previousMonthOrders) / $previousMonthOrders) * 100 : 
+            (($lastMonthOrders - $previousMonthOrders) / $previousMonthOrders) * 100 :
             ($lastMonthOrders > 0 ? 100 : 0);
 
         // New products this week
@@ -300,7 +300,7 @@ class SellerController extends Controller
             'total_spent' => Order::where('user_id', $user->id)->where('status', 'delivered')->sum('total_amount') ?? 0,
             'pending_orders' => Order::where('user_id', $user->id)->where('status', 'pending')->count(),
             'completed_orders' => Order::where('user_id', $user->id)->where('status', 'delivered')->count(),
-            'average_order_value' => Order::where('user_id', $user->id)->count() > 0 ? 
+            'average_order_value' => Order::where('user_id', $user->id)->count() > 0 ?
                 Order::where('user_id', $user->id)->sum('total_amount') / Order::where('user_id', $user->id)->count() : 0,
             'order_growth' => 0,
             'spending_growth' => 0,
@@ -353,7 +353,7 @@ class SellerController extends Controller
         $recentMessages = collect([]);
 
         return view('customer.dashboard', compact(
-            'orders', 
+            'orders',
             'unreadMessages',
             'user',
             'seller',
@@ -424,8 +424,8 @@ class SellerController extends Controller
         // Get unread messages count
         $unreadMessages = $this->getUnreadMessagesCount($user);
 
-        return view('seller.products.index', compact(
-            'products', 
+        return view('seller.dashboard', compact(
+            'products',
             'categories',
             'unreadMessages',
             'user',
@@ -445,12 +445,12 @@ class SellerController extends Controller
         }
 
         $categories = Category::where('is_active', true)->get();
-        
+
         // Get unread messages count
         $unreadMessages = $this->getUnreadMessagesCount($user);
         $seller = $user->seller;
 
-        return view('seller.products.create', compact(
+        return view('products.create', compact(
             'categories',
             'unreadMessages',
             'user',
@@ -522,7 +522,7 @@ class SellerController extends Controller
 
             DB::commit();
 
-            return redirect()->route('seller.products')
+            return redirect()->route('products.index')
                 ->with('success', 'Bidhaa imeongezwa kikamilifu!');
 
         } catch (\Exception $e) {
@@ -554,8 +554,8 @@ class SellerController extends Controller
         // Get unread messages count
         $unreadMessages = $this->getUnreadMessagesCount($user);
 
-        return view('seller.products.edit', compact(
-            'product', 
+        return view('products.edit', compact(
+            'product',
             'categories',
             'unreadMessages',
             'user',
@@ -630,7 +630,7 @@ class SellerController extends Controller
 
             DB::commit();
 
-            return redirect()->route('seller.products')
+            return redirect()->route('products.index')
                 ->with('success', 'Bidhaa imesasishwa kikamilifu!');
 
         } catch (\Exception $e) {
@@ -860,7 +860,7 @@ class SellerController extends Controller
         $unreadMessages = $this->getUnreadMessagesCount($user);
 
         return view('seller.profile', compact(
-            'user', 
+            'user',
             'seller',
             'unreadMessages'
         ));
@@ -1014,6 +1014,372 @@ class SellerController extends Controller
             'unreadMessages',
             'user',
             'seller'
+        ));
+    }
+
+    /**
+     * Seller Settings Page
+     */
+    public function settings() {
+        $user = Auth::user();
+
+        if ($user->user_type !== 'seller' || !$user->seller) {
+            return redirect()->route('register.seller')
+                ->with('error', 'Tafadhali jisajili kama muuzaji kwanza.');
+        }
+
+        $seller = $user->seller;
+        $categories = Category::where('is_active', true)->get();
+        $regions = \App\Models\Region::all();
+
+        // Get unread messages count
+        $unreadMessages = $this->getUnreadMessagesCount($user);
+
+        return view('seller.settings', compact(
+            'user',
+            'seller',
+            'categories',
+            'regions',
+            'unreadMessages'
+        ));
+    }
+
+    /**
+     * Update Seller Settings
+     */
+    public function updateSettings(Request $request) {
+        $user = Auth::user();
+
+        if ($user->user_type !== 'seller' || !$user->seller) {
+            return redirect()->route('register.seller')
+                ->with('error', 'Tafadhali jisajili kama muuzaji kwanza.');
+        }
+
+        $seller = $user->seller;
+
+        // Validate based on which settings are being updated
+        $validator = Validator::make($request->all(), [
+            // Store Settings
+            'store_name' => 'nullable|string|max:255|unique:sellers,store_name,' . $seller->id,
+            'store_description' => 'nullable|string',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'banner' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'vacation_mode' => 'nullable|boolean',
+            'vacation_message' => 'nullable|string',
+
+            // Business Info
+            'business_place' => 'nullable|string|max:255',
+            'business_region' => 'nullable|string|max:255',
+            'tax_id' => 'nullable|string|max:255',
+            'business_license' => 'nullable|string|max:255',
+            'customer_service_phone' => 'nullable|string|max:20',
+            'customer_service_email' => 'nullable|email',
+
+            // Payment Methods
+            'bank_name' => 'nullable|string|max:255',
+            'bank_account_number' => 'nullable|string|max:255',
+            'bank_account_name' => 'nullable|string|max:255',
+            'momo_number' => 'nullable|string|max:20',
+            'momo_name' => 'nullable|string|max:255',
+
+            // Policies
+            'return_policy' => 'nullable|string',
+            'shipping_policy' => 'nullable|string',
+
+            // Security
+            'current_password' => 'nullable|string',
+            'new_password' => 'nullable|string|min:8|confirmed',
+            'new_password_confirmation' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Update Store Settings
+            if ($request->has('store_name') && $request->store_name) {
+                $seller->store_name = $request->store_name;
+            }
+
+            if ($request->has('store_description')) {
+                $seller->store_description = $request->store_description;
+            }
+
+            if ($request->hasFile('logo')) {
+                if ($seller->logo) {
+                    Storage::disk('public')->delete($seller->logo);
+                }
+                $logoPath = $request->file('logo')->store('sellers/logos', 'public');
+                $seller->logo = $logoPath;
+            }
+
+            if ($request->hasFile('banner')) {
+                if ($seller->banner) {
+                    Storage::disk('public')->delete($seller->banner);
+                }
+                $bannerPath = $request->file('banner')->store('sellers/banners', 'public');
+                $seller->banner = $bannerPath;
+            }
+
+            // Update Vacation Mode
+            if ($request->has('vacation_mode')) {
+                $seller->vacation_mode = $request->boolean('vacation_mode');
+                $seller->vacation_message = $request->vacation_message;
+            }
+
+            // Update Business Info
+            if ($request->has('business_place') && $request->business_place) {
+                $seller->business_place = $request->business_place;
+            }
+
+            if ($request->has('business_region') && $request->business_region) {
+                $seller->business_region = $request->business_region;
+            }
+
+            if ($request->has('tax_id')) {
+                $seller->tax_id = $request->tax_id;
+            }
+
+            if ($request->has('business_license')) {
+                $seller->business_license = $request->business_license;
+            }
+
+            if ($request->has('customer_service_phone')) {
+                $seller->customer_service_phone = $request->customer_service_phone;
+            }
+
+            if ($request->has('customer_service_email')) {
+                $seller->customer_service_email = $request->customer_service_email;
+            }
+
+            // Update Payment Methods
+            if ($request->has('bank_name')) {
+                $seller->bank_name = $request->bank_name;
+            }
+
+            if ($request->has('bank_account_number')) {
+                $seller->bank_account_number = $request->bank_account_number;
+            }
+
+            if ($request->has('bank_account_name')) {
+                $seller->bank_account_name = $request->bank_account_name;
+            }
+
+            if ($request->has('momo_number')) {
+                $seller->momo_number = $request->momo_number;
+            }
+
+            if ($request->has('momo_name')) {
+                $seller->momo_name = $request->momo_name;
+            }
+
+            // Update Policies
+            if ($request->has('return_policy')) {
+                $seller->return_policy = $request->return_policy;
+            }
+
+            if ($request->has('shipping_policy')) {
+                $seller->shipping_policy = $request->shipping_policy;
+            }
+
+            $seller->save();
+
+            // Update Password if provided
+            if ($request->has('new_password') && $request->new_password) {
+                if (!Hash::check($request->current_password, $user->password)) {
+                    return redirect()->back()
+                        ->with('error', 'Nenosiri lako la sasa si sahihi.')
+                        ->withInput();
+                }
+
+                $user->password = Hash::make($request->new_password);
+                $user->save();
+            }
+
+            DB::commit();
+
+            return redirect()->back()
+                ->with('success', 'Mipango yako imesasishwa kikamilifu!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Imeshindikana kusasisha mipango. Tafadhali jaribu tena.')
+                ->withInput();
+        }
+    }
+
+    /**
+     * Seller Messages
+     */
+    public function messages(Request $request) {
+        $user = Auth::user();
+
+        if ($user->user_type !== 'seller' || !$user->seller) {
+            return redirect()->route('register.seller')
+                ->with('error', 'Tafadhali jisajili kama muuzaji kwanza.');
+        }
+
+        $seller = $user->seller;
+
+        $conversations = Conversation::where('seller_user_id', $user->id)
+            ->with(['user', 'messages' => function($query) {
+                $query->orderBy('created_at', 'desc');
+            }])
+            ->orderBy('updated_at', 'desc')
+            ->paginate(15);
+
+        // Get unread messages count
+        $unreadMessages = $this->getUnreadMessagesCount($user);
+
+        return view('seller.messages', compact(
+            'conversations',
+            'unreadMessages',
+            'user',
+            'seller'
+        ));
+    }
+
+    /**
+     * View Conversation
+     */
+    public function viewConversation($id) {
+        $user = Auth::user();
+
+        if ($user->user_type !== 'seller' || !$user->seller) {
+            return redirect()->route('register.seller')
+                ->with('error', 'Tafadhali jisajili kama muuzaji kwanza.');
+        }
+
+        $seller = $user->seller;
+
+        $conversation = Conversation::where('seller_user_id', $user->id)
+            ->with(['user', 'messages' => function($query) {
+                $query->orderBy('created_at', 'asc');
+            }])
+            ->findOrFail($id);
+
+        // Mark messages as read
+        Message::where('conversation_id', $id)
+            ->where('user_id', '!=', $user->id)
+            ->update(['read_at' => now()]);
+
+        // Get unread messages count
+        $unreadMessages = $this->getUnreadMessagesCount($user);
+
+        return view('seller.messages.show', compact(
+            'conversation',
+            'unreadMessages',
+            'user',
+            'seller'
+        ));
+    }
+
+    /**
+     * Send Reply Message
+     */
+    public function sendReply(Request $request, $id) {
+        $user = Auth::user();
+
+        if ($user->user_type !== 'seller' || !$user->seller) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized'
+            ], 401);
+        }
+
+        $seller = $user->seller;
+
+        $conversation = Conversation::where('seller_user_id', $user->id)
+            ->findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'content' => 'required|string|max:1000'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $message = Message::create([
+                'conversation_id' => $conversation->id,
+                'user_id' => $user->id,
+                'content' => $request->content,
+                'read_at' => now(),
+            ]);
+
+            $conversation->update(['updated_at' => now()]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Ujumbe umepelekwa!'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Imeshindikana kupeleka ujumbe.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Seller Analytics
+     */
+    public function analytics() {
+        $user = Auth::user();
+
+        if ($user->user_type !== 'seller' || !$user->seller) {
+            return redirect()->route('register.seller')
+                ->with('error', 'Tafadhali jisajili kama muuzaji kwanza.');
+        }
+
+        $seller = $user->seller;
+
+        // Get unread messages count
+        $unreadMessages = $this->getUnreadMessagesCount($user);
+
+        return view('seller.analytics', compact(
+            'user',
+            'seller',
+            'unreadMessages'
+        ));
+    }
+
+    /**
+     * Seller Account Settings
+     */
+    public function account() {
+        $user = Auth::user();
+
+        if ($user->user_type !== 'seller' || !$user->seller) {
+            return redirect()->route('register.seller')
+                ->with('error', 'Tafadhali jisajili kama muuzaji kwanza.');
+        }
+
+        $seller = $user->seller;
+
+        // Get unread messages count
+        $unreadMessages = $this->getUnreadMessagesCount($user);
+
+        return view('seller.account', compact(
+            'user',
+            'seller',
+            'unreadMessages'
         ));
     }
 }

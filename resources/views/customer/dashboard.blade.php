@@ -78,7 +78,7 @@
                     <button onclick="toggleDropdown()" class="text-white hover:text-yellow-300 transition-colors relative" title="Account">
                         <i class="fas fa-user text-lg"></i>
                         <span class="absolute -top-2 -right-2 bg-yellow-500 text-gray-900 dark:text-gray-100 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                            {{ substr($user->username, 0, 2) }}
+                            {{-- {{ substr($user->username, 0, 2) }} --}}
                         </span>
                     </button>
                     <div class="dropdown-content">
@@ -106,10 +106,10 @@
         <div class="flex items-center space-x-4 mb-4 sm:mb-0">
             <div>
                 <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">Customer Dashboard</h1>
-                <p class="text-gray-600 dark:text-gray-400">Welcome back, {{ $customer->full_name ?? $user->username }}! Track your orders and payments.</p>
+                <p class="text-gray-600 dark:text-gray-400">Welcome back, Track your orders and payments.</p>
             </div>
         </div>
-        <a href="{{ route('customer.shop') }}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 w-fit">
+        <a href="{{ route('products.index') }}" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center space-x-2 w-fit">
             <i class="fas fa-shopping-bag"></i>
             <span>Continue Shopping</span>
         </a>
@@ -128,7 +128,7 @@
                 </div>
             </div>
             <p class="text-green-600 dark:text-green-400 text-sm mt-2" id="ordersTrend">
-                <i class="fas fa-arrow-up mr-1"></i> 
+                <i class="fas fa-arrow-up mr-1"></i>
                 <span id="newOrdersCount">{{ $stats['pending_orders'] ?? 0 }}</span> pending orders
             </p>
         </div>
@@ -189,19 +189,23 @@
             <div class="flex overflow-x-auto">
                 <button class="tab-button py-4 px-6 font-medium border-b-2 border-green-600 text-green-600 flex items-center active" data-tab="orders-tab">
                     <i class="fas fa-shopping-cart mr-2"></i> My Orders
-                    <span class="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full" id="ordersCount">{{ $allOrders->total() ?? 0 }}</span>
+                   <span class="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full" id="ordersCount">
+                    {{ is_array($allOrders) ? count($allOrders) : ($allOrders->total() ?? 0) }}
+                </span>
                 </button>
                 <button class="tab-button py-4 px-6 font-medium text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-800 dark:hover:text-gray-200 flex items-center" data-tab="payments-tab">
                     <i class="fas fa-credit-card mr-2"></i> Payments
-                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full" id="paymentsCount">{{ count($payments) }}</span>
+                   <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full" id="paymentsCount">
+                    {{ is_countable($payments) ? count($payments) : 0 }}
+                </span>
                 </button>
                 <button class="tab-button py-4 px-6 font-medium text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-800 dark:hover:text-gray-200 flex items-center" data-tab="tracking-tab">
                     <i class="fas fa-map-marker-alt mr-2"></i> Order Tracking
-                    <span class="ml-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full" id="trackingCount">{{ count($trackingOrders) }}</span>
+                    <span class="ml-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full" id="trackingCount">{{is_countable($trackingOrders) ? count($trackingOrders) : 0}}</span>
                 </button>
                 <button class="tab-button py-4 px-6 font-medium text-gray-600 dark:text-gray-400 border-b-2 border-transparent hover:text-gray-800 dark:hover:text-gray-200 flex items-center" data-tab="receipts-tab">
                     <i class="fas fa-receipt mr-2"></i> Receipts
-                    <span class="ml-2 bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full" id="receiptsCount">{{ count($receipts) }}</span>
+                    <span class="ml-2 bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full" id="receiptsCount">{{ is_array($receipts) ? count($receipts) : 0 }}</span>
                 </button>
             </div>
         </div>
@@ -209,7 +213,7 @@
         <!-- Tab Content: My Orders -->
         <div id="orders-tab" class="tab-content p-4 sm:p-6">
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-3 sm:space-y-0">
-                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">My Orders (<span id="ordersTotal">{{ $allOrders->total() ?? 0 }}</span>)</h2>
+                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">My Orders (<span id="ordersTotal"> {{ is_array($allOrders) ? count($allOrders) : ($allOrders->total() ?? 0) }}</span>)</h2>
                 <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
                     <select id="statusFilter" class="border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                         <option value="">All Status</option>
@@ -230,8 +234,8 @@
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4">
                         <div class="flex items-center space-x-4 mb-3 lg:mb-0">
                             @if($order->items->first() && $order->items->first()->product)
-                                <img src="{{ $order->items->first()->product->image_path ?? 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=100' }}" 
-                                     alt="{{ $order->items->first()->product->name }}" 
+                                <img src="{{ $order->items->first()->product->image_path ?? 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=100' }}"
+                                     alt="{{ $order->items->first()->product->name }}"
                                      class="w-16 h-16 object-cover rounded-lg">
                             @else
                                 <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
@@ -258,7 +262,7 @@
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between text-sm text-gray-600 dark:text-gray-400">
                         <div class="flex items-center space-x-4 mb-2 lg:mb-0">
                             <span><i class="fas fa-calendar mr-1"></i> Ordered: {{ $order->created_at->format('d M Y') }}</span>
-                            <span><i class="fas fa-truck mr-1"></i> 
+                            <span><i class="fas fa-truck mr-1"></i>
                                 @if($order->status === 'delivered')
                                     Delivered: {{ $order->updated_at->format('d M Y') }}
                                 @else
@@ -303,7 +307,7 @@
         <!-- Tab Content: Payments -->
         <div id="payments-tab" class="tab-content p-4 sm:p-6 hidden">
             <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">Payment History</h2>
-            
+
             <div class="space-y-4" id="paymentsList">
                 @forelse($payments as $payment)
                 <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
@@ -339,7 +343,7 @@
         <!-- Tab Content: Order Tracking -->
         <div id="tracking-tab" class="tab-content p-4 sm:p-6 hidden">
             <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">Order Tracking</h2>
-            
+
             <div id="trackingList">
                 @forelse($trackingOrders as $order)
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
@@ -384,7 +388,7 @@
         <!-- Tab Content: Receipts -->
         <div id="receipts-tab" class="tab-content p-4 sm:p-6 hidden">
             <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-6">Receipts & Invoices</h2>
-            
+
             <div id="receiptsList">
                 @forelse($receipts as $order)
                 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
@@ -416,7 +420,7 @@
                             <p class="text-gray-600 dark:text-gray-400">Official Receipt</p>
                             <p class="text-gray-500 dark:text-gray-400 text-sm">Receipt #RC-{{ $order->id }}</p>
                         </div>
-                        
+
                         <div class="mb-4">
                             <div class="flex justify-between text-sm mb-2">
                                 <span class="text-gray-600 dark:text-gray-400">Date:</span>
@@ -428,7 +432,7 @@
                             </div>
                             <div class="flex justify-between text-sm">
                                 <span class="text-gray-600 dark:text-gray-400">Customer:</span>
-                                <span class="font-medium text-gray-800 dark:text-gray-100">{{ $customer->full_name ?? $user->username }}</span>
+                                <span class="font-medium text-gray-800 dark:text-gray-100"></span>
                             </div>
                         </div>
 
@@ -598,14 +602,14 @@
         function initializeTheme() {
             const savedTheme = localStorage.getItem('theme');
             const systemTheme = detectSystemTheme();
-            
+
             if (savedTheme) {
                 html.classList.toggle('dark', savedTheme === 'dark');
             } else {
                 html.classList.toggle('dark', systemTheme === 'dark');
                 localStorage.setItem('theme', systemTheme);
             }
-            
+
             updateThemeIcon();
         }
 
@@ -645,7 +649,7 @@
         document.addEventListener('click', (e) => {
             const accountDropdown = document.getElementById('accountDropdown');
             const messagesDropdown = document.getElementById('messagesDropdown');
-            
+
             if (!accountDropdown.contains(e.target)) {
                 accountDropdown.classList.remove('active');
             }
@@ -658,14 +662,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             const tabButtons = document.querySelectorAll('.tab-button, .mobile-tab');
             const tabContents = document.querySelectorAll('.tab-content');
-            
+
             let currentTab = sessionStorage.getItem('currentTab') || 'orders-tab';
-            
+
             function switchTab(tabName) {
                 tabContents.forEach(content => {
                     content.classList.add('hidden');
                 });
-                
+
                 tabButtons.forEach(button => {
                     if (button.classList.contains('tab-button')) {
                         button.classList.remove('border-green-600', 'text-green-600');
@@ -674,16 +678,16 @@
                         button.classList.remove('active');
                     }
                 });
-                
+
                 document.getElementById(tabName).classList.remove('hidden');
                 sessionStorage.setItem('currentTab', tabName);
             }
-            
+
             tabButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const tabName = this.getAttribute('data-tab');
                     switchTab(tabName);
-                    
+
                     if (this.classList.contains('tab-button')) {
                         tabButtons.forEach(btn => {
                             if (btn.classList.contains('tab-button')) {
@@ -694,7 +698,7 @@
                         this.classList.remove('text-gray-600', 'dark:text-gray-400', 'border-transparent');
                         this.classList.add('border-green-600', 'text-green-600');
                     }
-                    
+
                     if (this.classList.contains('mobile-tab')) {
                         tabButtons.forEach(btn => {
                             if (btn.classList.contains('mobile-tab')) {
@@ -705,7 +709,7 @@
                     }
                 });
             });
-            
+
             if (document.getElementById(currentTab)) {
                 switchTab(currentTab);
                 tabButtons.forEach(button => {
@@ -731,17 +735,17 @@
             try {
                 const response = await fetch('/customer/api/conversations');
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const messagesList = document.getElementById('messagesList');
                     const messageCount = document.getElementById('messageCount');
-                    
+
                     let unreadCount = 0;
                     let messagesHTML = '';
-                    
+
                     data.conversations.forEach(conversation => {
                         unreadCount += conversation.unread_count;
-                        
+
                         messagesHTML += `
                             <div class="message-item ${conversation.unread_count > 0 ? 'unread' : ''}" onclick="openChat('${conversation.id}', '${conversation.seller_name}')">
                                 <div class="flex justify-between items-start mb-1">
@@ -758,14 +762,14 @@
                             </div>
                         `;
                     });
-                    
+
                     messagesList.innerHTML = messagesHTML || `
                         <div class="p-4 text-center text-gray-500 dark:text-gray-400">
                             <i class="fas fa-comments text-2xl mb-2"></i>
                             <p>No messages yet</p>
                         </div>
                     `;
-                    
+
                     messageCount.textContent = unreadCount;
                     messageCount.style.display = unreadCount > 0 ? 'flex' : 'none';
                 }
@@ -778,7 +782,7 @@
             const date = new Date(timestamp);
             const now = new Date();
             const diff = now - date;
-            
+
             if (diff < 60000) return 'Just now';
             if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
             if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
@@ -795,12 +799,12 @@
         function toggleChat(chatId) {
             const chatWindow = document.getElementById(chatId);
             const isVisible = !chatWindow.classList.contains('hidden');
-            
+
             // Hide all chat windows first
             document.querySelectorAll('.chat-window').forEach(chat => {
                 chat.classList.add('hidden');
             });
-            
+
             // Toggle the clicked chat
             if (!isVisible) {
                 chatWindow.classList.remove('hidden');
@@ -814,7 +818,7 @@
         function sendSupportMessage() {
             const input = document.querySelector('#supportChat .chat-input input');
             const message = input.value.trim();
-            
+
             if (message) {
                 const messagesContainer = document.getElementById('supportMessages');
                 const messageElement = document.createElement('div');
@@ -825,7 +829,7 @@
                 `;
                 messagesContainer.appendChild(messageElement);
                 input.value = '';
-                
+
                 // Auto reply after 2 seconds
                 setTimeout(() => {
                     const autoReply = document.createElement('div');
@@ -837,7 +841,7 @@
                     messagesContainer.appendChild(autoReply);
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 }, 2000);
-                
+
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
         }
@@ -845,7 +849,7 @@
         function sendSellerMessage() {
             const input = document.querySelector('#sellerChat .chat-input input');
             const message = input.value.trim();
-            
+
             if (message) {
                 const messagesContainer = document.getElementById('sellerMessages');
                 const messageElement = document.createElement('div');
@@ -856,7 +860,7 @@
                 `;
                 messagesContainer.appendChild(messageElement);
                 input.value = '';
-                
+
                 // Auto reply after 2 seconds
                 setTimeout(() => {
                     const autoReply = document.createElement('div');
@@ -868,7 +872,7 @@
                     messagesContainer.appendChild(autoReply);
                     messagesContainer.scrollTop = messagesContainer.scrollHeight;
                 }, 2000);
-                
+
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
         }
@@ -878,7 +882,7 @@
             try {
                 const response = await fetch(`/customer/api/orders/${orderId}/view`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const order = data.order;
                     document.getElementById('orderDetailsContent').innerHTML = `
@@ -955,11 +959,11 @@
             try {
                 const response = await fetch(`/customer/api/orders/${orderId}/track`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const order = data.order;
                     const trackingContainer = document.getElementById(`trackingSteps-${orderId}`);
-                    
+
                     if (trackingContainer) {
                         trackingContainer.innerHTML = order.tracking_steps.map(step => `
                             <div class="flex items-start space-x-4">
@@ -974,7 +978,7 @@
                             </div>
                         `).join('');
                     }
-                    
+
                     switchTab('tracking-tab');
                 }
             } catch (error) {
@@ -992,7 +996,7 @@
             try {
                 const response = await fetch(`/customer/api/orders/${orderId}/download-receipt`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     // In a real application, this would download a PDF
                     alert(`Receipt downloaded for order: ${data.receipt.order_number}`);
@@ -1007,7 +1011,7 @@
             try {
                 const response = await fetch(`/customer/api/orders/${orderId}/print-receipt`);
                 const data = await response.json();
-                
+
                 if (data.success) {
                     // In a real application, this would open print dialog
                     alert(`Receipt ready for printing: ${data.order_number}`);
@@ -1023,12 +1027,12 @@
             try {
                 const response = await fetch('/customer/api/dashboard/stats');
                 const data = await response.json();
-                
+
                 if (data.success) {
                     document.getElementById('totalOrders').textContent = data.stats.total_orders;
                     document.getElementById('pendingOrders').textContent = data.stats.pending_orders;
                     document.getElementById('supportTickets').textContent = data.support_tickets;
-                    
+
                     // Update trends
                     const newOrders = Math.floor(data.stats.total_orders * 0.1); // Simulate 10% new orders
                     document.getElementById('newOrdersCount').textContent = newOrders;
@@ -1042,11 +1046,11 @@
         function switchTab(tabName) {
             const tabButtons = document.querySelectorAll('.tab-button, .mobile-tab');
             const tabContents = document.querySelectorAll('.tab-content');
-            
+
             tabContents.forEach(content => {
                 content.classList.add('hidden');
             });
-            
+
             tabButtons.forEach(button => {
                 if (button.classList.contains('tab-button')) {
                     button.classList.remove('border-green-600', 'text-green-600');
@@ -1055,9 +1059,9 @@
                     button.classList.remove('active');
                 }
             });
-            
+
             document.getElementById(tabName).classList.remove('hidden');
-            
+
             tabButtons.forEach(button => {
                 const buttonTabName = button.getAttribute('data-tab');
                 if (buttonTabName === tabName) {
@@ -1069,7 +1073,7 @@
                     }
                 }
             });
-            
+
             sessionStorage.setItem('currentTab', tabName);
         }
 
@@ -1087,7 +1091,7 @@
         function filterOrders() {
             const status = document.getElementById('statusFilter').value;
             const date = document.getElementById('dateFilter').value;
-            
+
             // In a real application, this would make an API call to filter orders
             console.log('Filtering orders by:', { status, date });
         }
